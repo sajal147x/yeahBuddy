@@ -6,6 +6,8 @@ struct HomeView: View {
     @Environment(WorkoutLog.self) private var log
     // The user's kg/lb choice, saved in UserDefaults and shared by every screen.
     @AppStorage("weightUnit") private var unit: WeightUnit = .kilograms
+    // The app-wide appearance choice, shared with RootView.
+    @AppStorage("appearance") private var appearance: AppAppearance = .system
     // Whether the full-screen active workout is showing.
     @State private var showingWorkout = false
 
@@ -49,12 +51,17 @@ struct HomeView: View {
         }
     }
 
-    /// The round gear button that opens unit settings.
+    /// The round gear button that opens unit and appearance settings.
     private var settingsMenu: some View {
         Menu {
             Picker("Units", selection: $unit) {
                 ForEach(WeightUnit.allCases) { unit in
                     Text(unit.rawValue).tag(unit)
+                }
+            }
+            Picker("Appearance", selection: $appearance) {
+                ForEach(AppAppearance.allCases, id: \.self) { appearance in
+                    Text(appearance.rawValue).tag(appearance)
                 }
             }
         } label: {

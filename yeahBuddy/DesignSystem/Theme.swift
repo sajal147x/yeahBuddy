@@ -3,7 +3,23 @@ import SwiftUI
 // Design tokens. Views use these instead of raw numbers or colors, so the whole look can be
 // tuned from this one file. The look is inspired by Sumeria: calm mint-gray surfaces, white
 // cards, one deep teal brand color, and big left-aligned titles. Every color has a light
-// and a dark value and follows the phone's appearance setting.
+// and a dark value and follows the user's selected appearance.
+
+/// A saved appearance choice. System leaves SwiftUI free to follow the phone's setting.
+enum AppAppearance: String, CaseIterable {
+    case system = "System"
+    case light = "Light"
+    case dark = "Dark"
+
+    /// The app-wide override, or no override when following the system.
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+}
 
 /// Spacing steps. Use these for padding and stack spacing instead of literal numbers.
 enum Spacing {

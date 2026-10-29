@@ -25,6 +25,8 @@ enum AppTab: String, TabBarItem {
 
 /// The top-level screen: the selected tab's content with the floating tab bar over it.
 struct RootView: View {
+    // Shared with Home's settings menu and restored on the next launch.
+    @AppStorage("appearance") private var appearance: AppAppearance = .system
     // Which tab is showing. Starts on Home every launch.
     @State private var tab: AppTab = .home
 
@@ -42,6 +44,7 @@ struct RootView: View {
             FloatingTabBar(selection: $tab)
                 .padding(.bottom, Spacing.xs)
         }
+        .preferredColorScheme(appearance.colorScheme)
     }
 
     /// Shows a tab's screen only while its tab is selected. Hidden tabs stay alive (keeping
