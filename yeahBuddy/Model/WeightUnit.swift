@@ -52,6 +52,19 @@ nonisolated enum WeightUnit: String, CaseIterable, Identifiable {
         }
     }
 
+    /// The standard empty barbell in this unit: where a new exercise's weight starts.
+    ///
+    /// Each unit has its own bar rather than converting one: a metric Olympic bar is 20 kg,
+    /// while gyms in pounds use a 45 lb bar. Converting 20 kg would give an odd 44.1 lb.
+    var emptyBar: Double {
+        switch self {
+        case .kilograms:
+            return 20
+        case .pounds:
+            return 45
+        }
+    }
+
     /// Formats stored kilograms in this unit with at most one decimal, e.g. "80 kg", "176.4 lb".
     ///
     /// Rounding to one decimal also hides the tiny error from converting pounds to kilograms

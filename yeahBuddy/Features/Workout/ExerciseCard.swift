@@ -25,9 +25,9 @@ struct ExerciseCard: View {
         self.entry = entry
         self.unit = unit
         // Start from the last set so repeating it is one tap. A fresh exercise starts at
-        // 20 kg (an empty Olympic bar) for 8 reps.
+        // the empty bar in the user's unit (20 kg or 45 lb) for 8 reps.
         let last = entry.orderedSets.last
-        _weight = State(initialValue: last.map { unit.value(fromKilograms: $0.weightKg) } ?? unit.value(fromKilograms: 20))
+        _weight = State(initialValue: last.map { unit.value(fromKilograms: $0.weightKg) } ?? unit.emptyBar)
         _reps = State(initialValue: Double(last?.reps ?? 8))
     }
 

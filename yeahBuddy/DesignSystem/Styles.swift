@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The tile look every card shares: a rounded surface with an optional color wash
-/// fading in from the top-left corner.
+/// fading in from the top-left corner, floating on a soft glow (see `Elevation`).
 struct TileModifier: ViewModifier {
     /// The wash color, usually a muscle group's tint. Nil for a plain tile.
     var tint: Color?
@@ -9,7 +9,7 @@ struct TileModifier: ViewModifier {
     /// Pads the content and draws the tile background behind it.
     ///
     /// - Parameter content: The view being styled as a tile.
-    /// - Returns: The content filling the available width on a rounded tile.
+    /// - Returns: The content filling the available width on a rounded, glowing tile.
     func body(content: Content) -> some View {
         content
             .padding(Spacing.lg)
@@ -17,6 +17,9 @@ struct TileModifier: ViewModifier {
             .background {
                 RoundedRectangle(cornerRadius: Radius.tile, style: .continuous)
                     .fill(Color.surface)
+                    // The glow goes on the background shape only, so text and buttons
+                    // inside the tile stay crisp instead of each getting their own shadow.
+                    .shadow(color: glowColor, radius: Elevation.radius, x: 0, y: Elevation.y)
                     .overlay {
                         // The wash fades from 35% to 5% so text stays readable on top.
                         if let tint {
@@ -29,6 +32,14 @@ struct TileModifier: ViewModifier {
                         }
                     }
             }
+    }
+
+    /// The glow under the tile: its own tint when it has one, faint white otherwise.
+    private var glowColor: Color {
+        if let tint {
+            return tint.opacity(Elevation.tintOpacity)
+        }
+        return Color.white.opacity(Elevation.plainOpacity)
     }
 }
 

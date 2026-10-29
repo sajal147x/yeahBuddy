@@ -25,6 +25,21 @@ enum Radius {
     static let control: CGFloat = 14
 }
 
+/// How far tiles appear to float above the canvas.
+///
+/// On a true-black canvas a dark drop shadow is invisible, so tiles cast a soft glow
+/// instead: their own tint for colored tiles, faint white for plain ones.
+enum Elevation {
+    /// How soft the glow is; larger spreads it wider.
+    static let radius: CGFloat = 18
+    /// How far the glow sits below the tile, so light seems to come from above.
+    static let y: CGFloat = 8
+    /// Glow strength under a tinted tile.
+    static let tintOpacity: Double = 0.35
+    /// Glow strength under a plain tile. Kept faint so plain tiles stay quieter than tinted ones.
+    static let plainOpacity: Double = 0.08
+}
+
 extension Color {
     /// Page background: true black in dark mode, like a scoreboard.
     static let canvas = Color(light: UIColor(white: 0.95, alpha: 1), dark: .black)
