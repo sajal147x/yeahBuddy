@@ -19,7 +19,7 @@ struct TileModifier: ViewModifier {
                     .fill(Color.surface)
                     // The glow goes on the background shape only, so text and buttons
                     // inside the tile stay crisp instead of each getting their own shadow.
-                    .shadow(color: glowColor, radius: Elevation.radius, x: 0, y: Elevation.y)
+                    .glow(glowColor)
                     .overlay {
                         // The wash fades from 35% to 5% so text stays readable on top.
                         if let tint {
@@ -51,14 +51,27 @@ extension View {
     func tile(tint: Color? = nil) -> some View {
         modifier(TileModifier(tint: tint))
     }
+
+    /// Makes this view float on a soft glow, using the shared `Elevation` values so tiles
+    /// and buttons lift off the canvas by the same amount.
+    ///
+    /// Apply it to a background shape, not to a view with text in it, or every piece of
+    /// text gets its own blurry shadow.
+    ///
+    /// - Parameter color: The glow color, already at the opacity wanted.
+    /// - Returns: The view with the glow drawn beneath it.
+    func glow(_ color: Color) -> some View {
+        shadow(color: color, radius: Elevation.radius, x: 0, y: Elevation.y)
+    }
 }
 
 /// A full-width, high-contrast button for the main action on a screen.
+/// It glows in its own color, like a tinted tile, so the main action stands out most.
 struct PrimaryButtonStyle: ButtonStyle {
     /// The button's fill color. Defaults to the app's accent green.
     var tint: Color = .accentColor
 
-    /// Draws the label on a filled, rounded background that dims while pressed.
+    /// Draws the label on a filled, glowing, rounded background that dims while pressed.
     ///
     /// - Parameter configuration: The label and pressed state from SwiftUI.
     /// - Returns: The styled button.
@@ -69,7 +82,12 @@ struct PrimaryButtonStyle: ButtonStyle {
             .foregroundStyle(.black)
             // 54pt tall: easy to hit with a thumb between sets.
             .frame(maxWidth: .infinity, minHeight: 54)
-            .background(tint, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+            .background {
+                RoundedRectangle(cornerRadius: Radius.control, style: .continuous)
+                    .fill(tint)
+                    // Glow on the shape only, so the label text stays sharp.
+                    .glow(tint.opacity(Elevation.tintOpacity))
+            }
             .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }
