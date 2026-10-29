@@ -1,11 +1,15 @@
 import Testing
 @testable import yeahBuddy
 
+/// The summary numbers a workout tile shows.
 @MainActor
 struct WorkoutSummaryTests {
+    /// A fresh in-memory store for each test.
     let store = TestStore()
+    /// The clock the log uses, so set times are predictable.
     let clock = TestClock()
 
+    /// Volume and set count add up across every exercise in the workout.
     @Test func totalsVolumeAndSetsAcrossExercises() {
         let log = WorkoutLog(container: store.container, now: { [clock] in clock.now })
         let bench = Exercise(name: "Bench Press", muscle: .chest)

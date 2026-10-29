@@ -1,14 +1,20 @@
 import Testing
 @testable import yeahBuddy
 
+/// Behavior of `RestTimer`, driven by a hand-moved clock instead of real waiting.
 @MainActor
 struct RestTimerTests {
+    /// The clock the timer counts against.
     let clock = TestClock()
 
+    /// Creates a stopped timer on this test's clock.
+    ///
+    /// - Returns: A new `RestTimer`.
     func makeTimer() -> RestTimer {
         RestTimer(now: { [clock] in clock.now })
     }
 
+    /// Remaining time drops as the clock moves.
     @Test func countsDownFromTheStartingDuration() {
         let timer = makeTimer()
         #expect(timer.remaining == 0)
@@ -21,6 +27,7 @@ struct RestTimerTests {
         #expect(timer.isRunning)
     }
 
+    /// Remaining time bottoms out at zero instead of going negative.
     @Test func stopsAtZeroOnceTimeIsUp() {
         let timer = makeTimer()
         timer.start(seconds: 90)
@@ -31,6 +38,7 @@ struct RestTimerTests {
         #expect(!timer.isRunning)
     }
 
+    /// +15s adds to a running rest, or starts a new 15s rest after one ended.
     @Test func extendingAddsTimeOrStartsAFreshCountdown() {
         let timer = makeTimer()
         timer.start(seconds: 90)
@@ -44,6 +52,7 @@ struct RestTimerTests {
         #expect(timer.remaining == 15)
     }
 
+    /// Skip ends the rest right away.
     @Test func skippingEndsTheRestImmediately() {
         let timer = makeTimer()
         timer.start(seconds: 90)

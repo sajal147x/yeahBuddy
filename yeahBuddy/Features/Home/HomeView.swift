@@ -3,9 +3,12 @@ import SwiftUI
 /// The scoreboard: the live workout on top, then past workouts as tiles.
 struct HomeView: View {
     @Environment(WorkoutLog.self) private var log
+    // The user's kg/lb choice, saved in UserDefaults and shared by every screen.
     @AppStorage("weightUnit") private var unit: WeightUnit = .kilograms
+    // Whether the full-screen active workout is showing.
     @State private var showingWorkout = false
 
+    /// Live tile or Start button, then the Recent feed, with settings in the toolbar.
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -30,6 +33,7 @@ struct HomeView: View {
                                 tint: workout.tint
                             )
                         }
+                        // Plain style so the tile keeps its own colors instead of link blue.
                         .buttonStyle(.plain)
                     }
                 }
@@ -55,6 +59,7 @@ struct HomeView: View {
         }
     }
 
+    /// The LIVE tile when a workout is running (tap to reopen it), otherwise Start Workout.
     @ViewBuilder
     private var currentWorkout: some View {
         if let workout = log.active {

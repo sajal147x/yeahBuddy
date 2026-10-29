@@ -1,5 +1,9 @@
 /// The exercises every install starts with.
+///
+/// `ExerciseCatalog` copies these into the store on first launch only, so editing this list
+/// later does not change existing installs.
 enum BuiltInExercises {
+    /// Name and muscle group for each built-in exercise, grouped by muscle for readability.
     static let all: [(name: String, muscle: MuscleGroup)] = [
         ("Bench Press", .chest),
         ("Incline Dumbbell Press", .chest),

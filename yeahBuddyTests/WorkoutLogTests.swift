@@ -3,15 +3,22 @@ import SwiftData
 import Testing
 @testable import yeahBuddy
 
+/// Behavior of `WorkoutLog`, tested only through its public interface.
 @MainActor
 struct WorkoutLogTests {
+    /// A fresh in-memory store for each test.
     let store = TestStore()
+    /// The clock every log in a test shares, so times are predictable.
     let clock = TestClock()
 
+    /// Opens a log over this test's store and clock. Calling it twice simulates a relaunch.
+    ///
+    /// - Returns: A new `WorkoutLog`.
     func makeLog() -> WorkoutLog {
         WorkoutLog(container: store.container, now: { [clock] in clock.now })
     }
 
+    /// Regression: the app crashed when only the log, not the caller, held the store.
     @Test func worksWhenTheCallerDoesNotHoldTheStore() {
         let log = WorkoutLog(container: try! ModelContainer(
             for: AppSchema.schema,
@@ -23,6 +30,7 @@ struct WorkoutLogTests {
         #expect(log.active != nil)
     }
 
+    /// Logging is possible straight away: no need to start a workout or add the exercise first.
     @Test func loggingASetWithNoWorkoutRunningStartsOne() {
         let log = makeLog()
         let bench = Exercise(name: "Bench Press", muscle: .chest)
@@ -36,6 +44,7 @@ struct WorkoutLogTests {
         #expect(workout.orderedEntries[0].orderedSets.map(\.weightKg) == [80])
     }
 
+    /// Sets of the same exercise group together even when other exercises come in between.
     @Test func setsJoinTheRunningWorkoutGroupedByExerciseInOrder() {
         let log = makeLog()
         let bench = Exercise(name: "Bench Press", muscle: .chest)
@@ -53,6 +62,7 @@ struct WorkoutLogTests {
         #expect(entries[1].orderedSets.map(\.reps) == [5])
     }
 
+    /// Finishing stamps the end time and moves the workout to the top of history.
     @Test func finishedWorkoutsAppearInHistoryNewestFirst() {
         let log = makeLog()
         let bench = Exercise(name: "Bench Press", muscle: .chest)
@@ -71,6 +81,7 @@ struct WorkoutLogTests {
         #expect(first.endedAt == first.startedAt.addingTimeInterval(3600))
     }
 
+    /// Closing the app mid-workout loses nothing: a new log picks up where the old one left off.
     @Test func aRelaunchedLogResumesTheWorkoutInProgressAndHistory() {
         let bench = Exercise(name: "Bench Press", muscle: .chest)
         let before = makeLog()
@@ -87,6 +98,7 @@ struct WorkoutLogTests {
         #expect(after.history == [finished])
     }
 
+    /// A workout with no sets is thrown away rather than cluttering history.
     @Test func finishingAWorkoutWithNoSetsDiscardsIt() {
         let log = makeLog()
         log.add(Exercise(name: "Bench Press", muscle: .chest))
@@ -98,6 +110,7 @@ struct WorkoutLogTests {
         #expect(makeLog().history.isEmpty)
     }
 
+    /// A mistyped set (800 kg) can be removed without touching the others.
     @Test func removingASetTakesItOutOfItsExercise() {
         let log = makeLog()
         let bench = Exercise(name: "Bench Press", muscle: .chest)
@@ -111,6 +124,7 @@ struct WorkoutLogTests {
         #expect(entry.orderedSets.map(\.weightKg) == [80])
     }
 
+    /// Delete works the same for a finished workout and the one in progress, and sticks.
     @Test func deletingAWorkoutRemovesItWhetherFinishedOrInProgress() {
         let log = makeLog()
         let bench = Exercise(name: "Bench Press", muscle: .chest)
@@ -130,6 +144,7 @@ struct WorkoutLogTests {
         #expect(relaunched.history.isEmpty)
     }
 
+    /// Removing an exercise from the middle doesn't shuffle the rest.
     @Test func removingAnExerciseKeepsTheOthersInOrder() {
         let log = makeLog()
         log.add(Exercise(name: "Bench Press", muscle: .chest))

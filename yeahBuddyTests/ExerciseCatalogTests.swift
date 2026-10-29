@@ -1,10 +1,13 @@
 import Testing
 @testable import yeahBuddy
 
+/// Behavior of `ExerciseCatalog`: seeding, search and custom exercises.
 @MainActor
 struct ExerciseCatalogTests {
+    /// A fresh in-memory store for each test.
     let store = TestStore()
 
+    /// Built-ins are added exactly once, however many times the catalog is opened.
     @Test func firstLaunchProvidesBuiltInExercisesOnce() {
         let first = ExerciseCatalog(container: store.container)
         let second = ExerciseCatalog(container: store.container)
@@ -14,6 +17,7 @@ struct ExerciseCatalogTests {
         #expect(first.all.map(\.name) == first.all.map(\.name).sorted())
     }
 
+    /// Search finds partial, any-case matches; blank search shows everything.
     @Test func searchMatchesAnyPartOfTheNameIgnoringCase() {
         let catalog = ExerciseCatalog(container: store.container)
 
@@ -23,6 +27,7 @@ struct ExerciseCatalogTests {
         #expect(catalog.search("  ").count == catalog.all.count)
     }
 
+    /// Custom names are trimmed and sorted in, and an existing name is never duplicated.
     @Test func customExercisesJoinTheCatalogWithoutDuplicates() {
         let catalog = ExerciseCatalog(container: store.container)
         let countBefore = catalog.all.count

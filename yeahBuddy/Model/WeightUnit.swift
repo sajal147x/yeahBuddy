@@ -2,15 +2,23 @@ import Foundation
 
 /// How weights are shown and entered. Storage is always kilograms, so switching units never
 /// rewrites saved data.
+///
+/// `nonisolated` because it is a pure value type with no UI state; it can be used from
+/// any thread, including tests that are not on the main actor.
 nonisolated enum WeightUnit: String, CaseIterable, Identifiable {
     case kilograms = "kg"
     case pounds = "lb"
 
+    /// Stable identity for SwiftUI pickers; the raw value is unique per case.
     var id: String { rawValue }
 
+    // The international avoirdupois pound is defined as exactly 0.45359237 kg.
     private static let poundsPerKilogram = 2.20462262
 
     /// Converts a value the user entered in this unit into kilograms for storage.
+    ///
+    /// - Parameter value: The weight in this unit, e.g. 225 for pounds.
+    /// - Returns: The same weight in kilograms.
     func kilograms(from value: Double) -> Double {
         switch self {
         case .kilograms:
@@ -21,6 +29,9 @@ nonisolated enum WeightUnit: String, CaseIterable, Identifiable {
     }
 
     /// Converts stored kilograms into this unit.
+    ///
+    /// - Parameter kg: A stored weight in kilograms.
+    /// - Returns: The same weight in this unit, unrounded.
     func value(fromKilograms kg: Double) -> Double {
         switch self {
         case .kilograms:
@@ -31,6 +42,7 @@ nonisolated enum WeightUnit: String, CaseIterable, Identifiable {
     }
 
     /// How much one tap of a weight stepper changes the value: the smallest common plate pair.
+    /// Two 1.25 kg plates in metric gyms, two 2.5 lb plates in imperial ones.
     var step: Double {
         switch self {
         case .kilograms:
@@ -41,6 +53,12 @@ nonisolated enum WeightUnit: String, CaseIterable, Identifiable {
     }
 
     /// Formats stored kilograms in this unit with at most one decimal, e.g. "80 kg", "176.4 lb".
+    ///
+    /// Rounding to one decimal also hides the tiny error from converting pounds to kilograms
+    /// and back, so 225 lb always shows as "225 lb".
+    ///
+    /// - Parameter kg: A stored weight in kilograms.
+    /// - Returns: The weight with its unit, using the user's locale for digits and grouping.
     func format(kilograms kg: Double) -> String {
         let value = value(fromKilograms: kg).formatted(.number.precision(.fractionLength(0...1)))
         return "\(value) \(rawValue)"
