@@ -37,4 +37,6 @@ Run one suite with `scripts/test.sh WorkoutLogTests`. The tests use Swift Testin
 
 SwiftUI + SwiftData, with no third-party dependencies. The app is split into a few deep modules (`WorkoutLog`, `ExerciseCatalog`, `RestTimer`), and the screens are built from a shared design system. The logic modules were written test-first.
 
+To ship a TestFlight build, run `scripts/testflight.sh` (or `--check` for a dry run). [CLAUDE.md](CLAUDE.md) has the working rules and release steps.
+
 See [DESIGN.md](DESIGN.md) for the principles, the module map, and what's planned next (voice logging, routines, progress charts, Apple Health).
