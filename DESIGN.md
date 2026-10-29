@@ -11,6 +11,11 @@ A local-first iPhone workout tracker. SwiftUI + SwiftData, iOS 26.
 - **Reusable UI.** Views use `DesignSystem` tokens, styles and components; no raw colors, fonts or spacing in feature code.
 - **Local-first.** No network, no accounts. The only planned exception (voice logging) runs on-device too.
 
+## Workflow
+
+- **Nothing is committed until the owner has tested the feature.** Passing tests and a simulator check are not enough on their own: the change is built, then handed over to try, and committed only after the owner confirms it works.
+- **Pushing is a separate step** that also waits for the owner's go-ahead.
+
 ## Look
 
 Inspired by Apple Sports: dark scoreboard canvas, bold tiles, big monospaced numbers, a color per muscle group (like team colors), and a LIVE tile for the workout in progress. Dark mode only in v1.
