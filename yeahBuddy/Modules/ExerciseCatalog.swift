@@ -26,10 +26,30 @@ final class ExerciseCatalog {
         // this, so "empty" never happens again.
         if all.isEmpty {
             for builtIn in BuiltInExercises.all {
-                context.insert(Exercise(name: builtIn.name, muscle: builtIn.muscle))
+                context.insert(Exercise(name: builtIn.name, muscle: builtIn.muscle, summary: builtIn.summary))
             }
             save()
             all = fetchAll()
+        }
+        fillMissingBuiltInSummaries()
+    }
+
+    /// Gives built-in exercises saved by an older version (before descriptions existed)
+    /// their description from `BuiltInExercises`.
+    ///
+    /// Only built-ins with an empty description are touched, so custom exercises and any
+    /// text already saved are never overwritten. Matching is by name.
+    private func fillMissingBuiltInSummaries() {
+        var changed = false
+        for exercise in all where !exercise.isCustom && exercise.summary.isEmpty {
+            if let builtIn = BuiltInExercises.all.first(where: { $0.name == exercise.name }) {
+                exercise.summary = builtIn.summary
+                changed = true
+            }
+        }
+        // Skip the disk write on every normal launch, where nothing is missing.
+        if changed {
+            save()
         }
     }
 
@@ -52,14 +72,18 @@ final class ExerciseCatalog {
     /// - Parameters:
     ///   - name: The exercise name as typed. It is trimmed before saving.
     ///   - muscle: The muscle group it trains. Ignored when the name already exists.
+    ///   - summary: An optional description. Trimmed, including stray line breaks.
+    ///     Ignored when the name already exists.
     /// - Returns: The new exercise, or the existing one with that name.
     @discardableResult
-    func addCustom(name: String, muscle: MuscleGroup) -> Exercise {
+    func addCustom(name: String, muscle: MuscleGroup, summary: String = "") -> Exercise {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         if let existing = all.first(where: { $0.name.caseInsensitiveCompare(trimmed) == .orderedSame }) {
             return existing
         }
-        let exercise = Exercise(name: trimmed, muscle: muscle, isCustom: true)
+        // Descriptions come from a multi-line field, so newlines are trimmed too.
+        let trimmedSummary = summary.trimmingCharacters(in: .whitespacesAndNewlines)
+        let exercise = Exercise(name: trimmed, muscle: muscle, isCustom: true, summary: trimmedSummary)
         context.insert(exercise)
         save()
         // Re-sort in memory rather than fetching again; the list is small.

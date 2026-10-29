@@ -17,6 +17,10 @@ final class Exercise {
     var muscle: MuscleGroup
     /// True for exercises the user created; false for the built-in catalog.
     var isCustom: Bool
+    /// A short "how to do it" description shown on the exercise's detail page.
+    /// Empty when the user didn't write one. The default lets stores saved before this
+    /// field existed open without a migration.
+    var summary: String = ""
 
     /// Creates an exercise.
     ///
@@ -24,9 +28,11 @@ final class Exercise {
     ///   - name: The display name.
     ///   - muscle: The main muscle group trained.
     ///   - isCustom: Whether the user created it. Built-in exercises leave this false.
-    init(name: String, muscle: MuscleGroup, isCustom: Bool = false) {
+    ///   - summary: A short description of how to do it. Optional.
+    init(name: String, muscle: MuscleGroup, isCustom: Bool = false, summary: String = "") {
         self.name = name
         self.muscle = muscle
         self.isCustom = isCustom
+        self.summary = summary
     }
 }

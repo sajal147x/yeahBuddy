@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Searchable list of exercises grouped by muscle. Typing a name that doesn't exist offers
-/// to create it.
+/// Searchable list of exercises grouped by muscle. Tapping one opens its detail page, where
+/// the user adds it; typing a name that doesn't exist offers to create it.
 struct ExercisePickerView: View {
     /// Called with the chosen (or newly created) exercise. The sheet closes itself after.
     let onPick: (Exercise) -> Void
@@ -47,6 +47,11 @@ struct ExercisePickerView: View {
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search or create")
             .navigationTitle("Add Exercise")
             .navigationBarTitleDisplayMode(.inline)
+            // Rows and the Create row push the detail page; the list (and the search text)
+            // stay underneath, so Back returns to exactly where the user was.
+            .navigationDestination(for: ExerciseDetailMode.self) { mode in
+                ExerciseDetailView(mode: mode, onAdd: pick)
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -57,16 +62,10 @@ struct ExercisePickerView: View {
         }
     }
 
-    /// A row that creates the typed name as a new exercise; tapping asks for its muscle group.
+    /// A row that opens the create form, pre-filled with the typed name.
     private var createSection: some View {
         Section("New exercise") {
-            Menu {
-                ForEach(MuscleGroup.allCases) { muscle in
-                    Button(muscle.displayName) {
-                        pick(catalog.addCustom(name: trimmedSearch, muscle: muscle))
-                    }
-                }
-            } label: {
+            NavigationLink(value: ExerciseDetailMode.create(name: trimmedSearch)) {
                 Label("Create “\(trimmedSearch)”", systemImage: "plus.circle.fill")
             }
         }
@@ -75,11 +74,10 @@ struct ExercisePickerView: View {
     /// One exercise: a muscle-colored dot, its name, and a CUSTOM tag if the user made it.
     ///
     /// - Parameter exercise: The exercise to show.
-    /// - Returns: A tappable row that picks the exercise.
+    /// - Returns: A row that opens the exercise's detail page. Nothing is added until the
+    ///   user taps Add there.
     private func row(for exercise: Exercise) -> some View {
-        Button {
-            pick(exercise)
-        } label: {
+        NavigationLink(value: ExerciseDetailMode.existing(exercise)) {
             HStack(spacing: Spacing.md) {
                 Circle()
                     .fill(exercise.muscle.tint)
@@ -96,7 +94,8 @@ struct ExercisePickerView: View {
         }
     }
 
-    /// Hands the exercise to the caller and closes the sheet.
+    /// Hands the exercise to the caller and closes the whole sheet, not just the detail page.
+    /// Passed to the detail page, because `dismiss` there would only pop back to the list.
     ///
     /// - Parameter exercise: The chosen exercise.
     private func pick(_ exercise: Exercise) {
