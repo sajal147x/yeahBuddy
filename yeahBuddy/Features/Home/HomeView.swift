@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// The scoreboard: the live workout on top, then past workouts as tiles.
+/// The Home tab: today's workout (or a Start button), this week's totals, and the last
+/// finished workout.
 struct HomeView: View {
     @Environment(WorkoutLog.self) private var log
     // The user's kg/lb choice, saved in UserDefaults and shared by every screen.
@@ -8,50 +9,39 @@ struct HomeView: View {
     // Whether the full-screen active workout is showing.
     @State private var showingWorkout = false
 
-    /// Live tile or Start button, then the Recent feed, with settings in the toolbar.
+    /// Header, current workout, This Week, then Last Workout.
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.md) {
-                    currentWorkout
-                    Text("Recent")
-                        .font(.tileTitle)
-                        .padding(.top, Spacing.md)
-                    if log.history.isEmpty {
-                        ContentUnavailableView(
-                            "No workouts yet",
-                            systemImage: "dumbbell",
-                            description: Text("Finished workouts show up here.")
-                        )
+                    ScreenHeader(title: "Today", subtitle: Date.now.formatted(.dateTime.weekday(.wide).month(.wide).day())) {
+                        settingsMenu
                     }
-                    ForEach(log.history) { workout in
-                        NavigationLink(value: workout) {
-                            WorkoutTile(
-                                title: workout.title,
-                                subtitle: workout.subtitle,
-                                stats: workout.stats(in: unit),
-                                tint: workout.tint
+                    currentWorkout
+                    SectionTitle("This week")
+                    thisWeek
+                    if let last = log.history.first {
+                        SectionTitle("Last workout")
+                        NavigationLink(value: last) {
+                            WorkoutCard(
+                                title: last.title,
+                                subtitle: last.subtitle,
+                                muscles: last.muscleGroups,
+                                stats: last.stats(in: unit)
                             )
                         }
-                        // Plain style so the tile keeps its own colors instead of link blue.
+                        // Plain style so the card keeps its own colors instead of link tint.
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(Spacing.lg)
+                .padding(.horizontal, Spacing.lg)
+                .padding(.bottom, Spacing.lg)
             }
             .background(Color.canvas)
-            .navigationTitle("yeahBuddy")
+            // The big ScreenHeader replaces the navigation bar on this root screen.
+            .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Workout.self) { workout in
                 WorkoutDetailView(workout: workout)
-            }
-            .toolbar {
-                Menu("Settings", systemImage: "gearshape") {
-                    Picker("Units", selection: $unit) {
-                        ForEach(WeightUnit.allCases) { unit in
-                            Text(unit.rawValue).tag(unit)
-                        }
-                    }
-                }
             }
             .fullScreenCover(isPresented: $showingWorkout) {
                 ActiveWorkoutView()
@@ -59,19 +49,28 @@ struct HomeView: View {
         }
     }
 
-    /// The LIVE tile when a workout is running (tap to reopen it), otherwise Start Workout.
+    /// The round gear button that opens unit settings.
+    private var settingsMenu: some View {
+        Menu {
+            Picker("Units", selection: $unit) {
+                ForEach(WeightUnit.allCases) { unit in
+                    Text(unit.rawValue).tag(unit)
+                }
+            }
+        } label: {
+            CircleIcon(systemImage: "gearshape")
+        }
+        .accessibilityLabel("Settings")
+    }
+
+    /// The live workout card when one is running (tap to reopen it), otherwise Start Workout.
     @ViewBuilder
     private var currentWorkout: some View {
         if let workout = log.active {
             Button {
                 showingWorkout = true
             } label: {
-                LiveWorkoutTile(
-                    title: workout.title,
-                    startedAt: workout.startedAt,
-                    setCount: workout.setCount,
-                    tint: workout.tint
-                )
+                LiveWorkoutCard(title: workout.title, startedAt: workout.startedAt, setCount: workout.setCount)
             }
             .buttonStyle(.plain)
         } else {
@@ -81,5 +80,16 @@ struct HomeView: View {
             }
             .buttonStyle(.primary)
         }
+    }
+
+    /// Workouts, sets and volume for the current week, in one card.
+    private var thisWeek: some View {
+        let week = log.thisWeek()
+        return HStack(alignment: .top) {
+            Stat(StatValue(number: "\(week.workouts)", label: week.workouts == 1 ? "Workout" : "Workouts"))
+            Stat(StatValue(number: "\(week.sets)", label: "Sets"))
+            Stat(StatValue(number: unit.formatNumber(kilograms: week.volumeKg), unit: unit.rawValue, label: "Volume"))
+        }
+        .card()
     }
 }

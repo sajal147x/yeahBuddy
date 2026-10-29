@@ -31,40 +31,46 @@ struct ExerciseCard: View {
         _reps = State(initialValue: Double(last?.reps ?? 8))
     }
 
-    /// The exercise's muscle color, used for the tile and the Log Set button.
-    private var tint: Color {
-        entry.exercise?.muscle.tint ?? .accentColor
-    }
-
     /// Header, one row per logged set, the two steppers, then Log Set.
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             header
-            ForEach(Array(entry.orderedSets.enumerated()), id: \.element.id) { index, set in
-                setRow(number: index + 1, set: set)
+            if !entry.sets.isEmpty {
+                VStack(alignment: .leading, spacing: Spacing.sm) {
+                    ForEach(Array(entry.orderedSets.enumerated()), id: \.element.id) { index, set in
+                        SetRow(
+                            number: index + 1,
+                            weight: unit.formatNumber(kilograms: set.weightKg),
+                            unit: unit.rawValue,
+                            reps: set.reps,
+                            onDelete: { log.remove(set) }
+                        )
+                    }
+                }
+                Divider().overlay(Color.divider)
             }
             HStack {
                 NumberStepper(value: $weight, step: unit.step, label: unit.rawValue)
                 NumberStepper(value: $reps, step: 1, label: "Reps", format: { "\(Int($0))" })
             }
-            .padding(.top, Spacing.xs)
             Button("Log Set", action: logSet)
-                .buttonStyle(.primary(tint: tint))
+                .buttonStyle(.primary)
                 // A set with zero reps isn't a set.
                 .disabled(reps < 1)
         }
-        .tile(tint: tint)
+        .card()
     }
 
-    /// The exercise name and muscle group, with a menu to remove the exercise.
+    /// The exercise name and muscle tag, with a menu to remove the exercise.
     private var header: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(entry.exercise?.name ?? "Exercise")
-                    .font(.tileTitle)
-                Text(entry.exercise?.muscle.displayName.uppercased() ?? "")
-                    .font(.tileLabel)
-                    .foregroundStyle(tint)
+                    .font(.cardTitle)
+                    .foregroundStyle(Color.textPrimary)
+                if let muscle = entry.exercise?.muscle {
+                    MuscleTag(muscle: muscle)
+                }
             }
             Spacer()
             Menu {
@@ -74,40 +80,11 @@ struct ExerciseCard: View {
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.headline)
+                    .foregroundStyle(Color.textPrimary)
                     .frame(width: 36, height: 36)
                     .background(Color.surfaceRaised, in: Circle())
             }
-            .tint(Color.textPrimary)
-        }
-    }
-
-    /// One logged set, e.g. "1   80 kg × 8", with a button to delete it.
-    ///
-    /// - Parameters:
-    ///   - number: The set's 1-based position within this exercise.
-    ///   - set: The logged set.
-    /// - Returns: The row.
-    private func setRow(number: Int, set: SetEntry) -> some View {
-        HStack {
-            Text("\(number)")
-                .font(.tileLabel)
-                .foregroundStyle(Color.textSecondary)
-                .frame(width: 24, alignment: .leading)
-            Text(unit.format(kilograms: set.weightKg))
-                .font(.scoreSmall)
-            Text("×")
-                .foregroundStyle(Color.textSecondary)
-            Text("\(set.reps)")
-                .font(.scoreSmall)
-            Spacer()
-            // Icon only to keep the row compact; the title stays for VoiceOver.
-            Button("Delete Set", systemImage: "xmark") {
-                log.remove(set)
-            }
-            .labelStyle(.iconOnly)
-            .font(.caption.weight(.bold))
-            .foregroundStyle(Color.textSecondary)
-            .buttonStyle(.plain)
+            .accessibilityLabel("Exercise options")
         }
     }
 

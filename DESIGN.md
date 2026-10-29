@@ -18,14 +18,22 @@ A local-first iPhone workout tracker. SwiftUI + SwiftData, iOS 26.
 
 ## Look
 
-Inspired by Apple Sports: dark scoreboard canvas, bold tiles, big monospaced numbers, a color per muscle group (like team colors), and a LIVE tile for the workout in progress. Dark mode only in v1.
+Inspired by Sumeria (references pulled from Mobbin):
+
+- **Calm surfaces:** pale mint-gray canvas, white cards with large continuous corners and a soft shadow.
+- **One brand color:** deep teal for primary buttons, a pale teal wash for secondary ones.
+- **Big left-aligned screen titles** with a summary line under them, instead of navigation bars on tab roots.
+- **Numbers with small decimals and units**, e.g. "82" big then ".5 kg" small (`Text.amount`).
+- **Muscle colors are small accents only:** a colored dot and label, never a whole card.
+- **Floating pill tab bar:** Home, History, Exercises.
+- **Light and dark**, following the system. Dark is a deep teal-black with mint as the brand color.
 
 ## Modules
 
 | Module | Interface | Hides |
 |---|---|---|
-| `WorkoutLog` | `active`, `history`, `start()`, `add(_:)`, `logSet(weightKg:reps:of:)`, `remove(_:)`, `finish()`, `delete(_:)` | SwiftData, ordering, persistence, starting workouts implicitly |
-| `ExerciseCatalog` | `all`, `search(_:)`, `addCustom(name:muscle:)` | Built-in seeding, duplicate handling |
+| `WorkoutLog` | `active`, `history`, `start()`, `add(_:)`, `logSet(weightKg:reps:of:)`, `remove(_:)`, `finish()`, `delete(_:)`, `thisWeek()` | SwiftData, ordering, persistence, starting workouts implicitly, week boundaries |
+| `ExerciseCatalog` | `all`, `search(_:)`, `addCustom(name:muscle:summary:)` | Built-in seeding and description backfill, duplicate handling |
 | `RestTimer` | `remaining`, `isRunning`, `start(seconds:)`, `extend(by:)`, `skip()` | End-time math that survives backgrounding |
 | `WeightUnit` | `kilograms(from:)`, `value(fromKilograms:)`, `format(kilograms:)`, `step` | Storage is always kg |
 
@@ -38,7 +46,7 @@ yeahBuddy/
   Model/          SwiftData models, WeightUnit, built-in exercises
   Modules/        WorkoutLog, ExerciseCatalog, RestTimer
   DesignSystem/   Theme tokens, Styles, Components/
-  Features/       Home, Workout, Exercises, History, Shared
+  Features/       Root (tabs), Home, Workout, Exercises, History, Shared
 yeahBuddyTests/   Swift Testing suites, one per module
 scripts/test.sh   Runs tests on the simulator: scripts/test.sh [SuiteName]
 ```

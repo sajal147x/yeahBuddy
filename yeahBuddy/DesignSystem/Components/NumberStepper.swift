@@ -6,7 +6,7 @@ struct NumberStepper: View {
     @Binding var value: Double
     /// How much one tap adds or removes, e.g. 2.5 for kilograms or 1 for reps.
     let step: Double
-    /// The caption under the number, e.g. "kg" or "Reps". Shown in uppercase.
+    /// The caption under the number, e.g. "kg" or "Reps".
     let label: String
     /// Turns the value into the text shown, e.g. "82.5".
     var format: (Double) -> String = { $0.formatted(.number.precision(.fractionLength(0...1))) }
@@ -19,10 +19,10 @@ struct NumberStepper: View {
                     // Clamp at zero: negative weight or reps are never valid.
                     value = max(0, value - step)
                 }
-                Text(format(value))
-                    .font(.score)
+                Text.amount(format(value), size: 28)
+                    .foregroundStyle(Color.textPrimary)
                     // Takes whatever width the buttons leave, so two steppers fit side by
-                    // side instead of pushing the tile off screen.
+                    // side instead of pushing the card off screen.
                     .frame(maxWidth: .infinity)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
@@ -31,8 +31,8 @@ struct NumberStepper: View {
                     value += step
                 }
             }
-            Text(label.uppercased())
-                .font(.tileLabel)
+            Text(label)
+                .font(.label)
                 .foregroundStyle(Color.textSecondary)
         }
         .animation(.snappy, value: value)
@@ -48,8 +48,9 @@ struct NumberStepper: View {
         Button(action: action) {
             Image(systemName: systemImage)
                 .font(.title3.weight(.bold))
+                .foregroundStyle(Color.brand)
                 .frame(width: 44, height: 44)
-                .background(Color.surfaceRaised, in: Circle())
+                .background(Color.brandSoft, in: Circle())
         }
         .buttonStyle(.plain)
         // Holding the button keeps stepping, so big weight jumps don't need many taps.
@@ -58,13 +59,13 @@ struct NumberStepper: View {
 }
 
 #Preview {
-    @Previewable @State var weight = 80.0
+    @Previewable @State var weight = 82.5
     @Previewable @State var reps = 8.0
     HStack {
         NumberStepper(value: $weight, step: 2.5, label: "kg")
-        NumberStepper(value: $reps, step: 1, label: "Reps")
+        NumberStepper(value: $reps, step: 1, label: "Reps", format: { "\(Int($0))" })
     }
-    .tile()
+    .card()
     .padding()
     .background(Color.canvas)
 }

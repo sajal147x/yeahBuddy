@@ -156,4 +156,36 @@ struct WorkoutLogTests {
         let names = try! #require(log.active).orderedEntries.map(\.exercise?.name)
         #expect(names == ["Bench Press", "Squat"])
     }
+
+    /// This Week counts only finished workouts started since the start of the current week
+    /// (Monday here), so last week's session and the one still in progress are left out.
+    @Test func thisWeekTotalsFinishedWorkoutsSinceTheWeekStarted() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        calendar.firstWeekday = 2
+        let log = WorkoutLog(container: store.container, now: { [clock] in clock.now }, calendar: calendar)
+        let bench = Exercise(name: "Bench Press", muscle: .chest)
+        let day: TimeInterval = 86_400
+        // The test clock starts on Monday 1 Jan 2001, 00:00 UTC.
+        let monday = clock.now
+
+        clock.now = monday.addingTimeInterval(-2 * day)  // Saturday last week
+        log.logSet(weightKg: 60, reps: 10, of: bench)
+        log.finish()
+        clock.now = monday.addingTimeInterval(1 * day)  // Tuesday
+        log.logSet(weightKg: 80, reps: 8, of: bench)
+        log.logSet(weightKg: 80, reps: 8, of: bench)
+        log.finish()
+        clock.now = monday.addingTimeInterval(2 * day)  // Wednesday
+        log.logSet(weightKg: 100, reps: 5, of: bench)
+        log.finish()
+        log.logSet(weightKg: 100, reps: 5, of: bench)  // still in progress
+
+        let week = log.thisWeek()
+
+        #expect(week.workouts == 2)
+        #expect(week.sets == 3)
+        // 80×8 + 80×8 + 100×5
+        #expect(week.volumeKg == 1780)
+    }
 }

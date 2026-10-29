@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// A grid of colored chips for choosing a muscle group, one per group.
-/// The selected chip fills with its muscle color; the others show it as an outline.
+/// A grid of chips for choosing a muscle group, one per group. The selected chip fills with
+/// the brand color; every chip keeps its muscle's colored dot as the only accent.
 struct MuscleChips: View {
     /// The chosen muscle group.
     @Binding var selection: MuscleGroup
@@ -21,24 +21,20 @@ struct MuscleChips: View {
     /// One tappable chip.
     ///
     /// - Parameter muscle: The muscle group the chip selects.
-    /// - Returns: A capsule button, filled when selected.
+    /// - Returns: A capsule button, brand-filled when selected.
     private func chip(for muscle: MuscleGroup) -> some View {
         let isSelected = muscle == selection
         return Button {
             selection = muscle
         } label: {
-            Text(muscle.displayName)
-                .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                // Black on the bright fill when selected, matching primary buttons.
-                .foregroundStyle(isSelected ? Color.black : Color.textPrimary)
-                .frame(maxWidth: .infinity, minHeight: 40)
-                .background {
-                    Capsule()
-                        .fill(isSelected ? muscle.tint : Color.surfaceRaised)
-                        .overlay {
-                            Capsule().strokeBorder(muscle.tint, lineWidth: isSelected ? 0 : 1.5)
-                        }
-                }
+            HStack(spacing: 6) {
+                MuscleDot(muscle: muscle)
+                Text(muscle.displayName)
+                    .font(.chip)
+                    .foregroundStyle(isSelected ? Color.onBrand : Color.textPrimary)
+            }
+            .frame(maxWidth: .infinity, minHeight: 40)
+            .background(isSelected ? Color.brand : Color.surfaceRaised, in: Capsule())
         }
         .buttonStyle(.plain)
         .animation(.snappy, value: isSelected)
@@ -48,7 +44,7 @@ struct MuscleChips: View {
 #Preview {
     @Previewable @State var muscle = MuscleGroup.legs
     MuscleChips(selection: $muscle)
-        .tile()
+        .card()
         .padding()
         .background(Color.canvas)
 }

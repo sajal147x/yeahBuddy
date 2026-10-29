@@ -12,7 +12,7 @@ struct ActiveWorkoutView: View {
     // Whether the "Discard this workout?" dialog is showing.
     @State private var confirmingDiscard = false
 
-    /// Scrolling tiles with Finish pinned to the bottom, plus the picker sheet and discard dialog.
+    /// Scrolling cards with Finish pinned to the bottom, plus the picker sheet and discard dialog.
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -62,15 +62,15 @@ struct ActiveWorkoutView: View {
     /// The scrolling content for a workout: scores, rest timer, exercise cards, Add Exercise.
     ///
     /// - Parameter workout: The workout in progress.
-    /// - Returns: The stacked tiles.
+    /// - Returns: The stacked cards.
     private func content(for workout: Workout) -> some View {
         VStack(spacing: Spacing.md) {
-            HStack(spacing: Spacing.lg) {
-                Stat(value: Text(workout.startedAt, style: .timer), label: "Time")
-                Stat(value: unit.format(kilograms: workout.totalVolumeKg), label: "Volume")
-                Stat(value: "\(workout.setCount)", label: "Sets")
+            HStack(alignment: .top, spacing: Spacing.lg) {
+                Stat(value: Text(workout.startedAt, style: .timer).font(.amount), label: "Time")
+                Stat(StatValue(number: unit.formatNumber(kilograms: workout.totalVolumeKg), unit: unit.rawValue, label: "Volume"))
+                Stat(StatValue(number: "\(workout.setCount)", label: "Sets"))
             }
-            .tile()
+            .card()
             RestBar()
             ForEach(workout.orderedEntries) { entry in
                 ExerciseCard(entry: entry, unit: unit)

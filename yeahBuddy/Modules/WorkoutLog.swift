@@ -23,6 +23,9 @@ final class WorkoutLog {
     private var context: ModelContext { container.mainContext }
     // Injected so tests can control time; the app uses the real clock.
     private let now: () -> Date
+    // Decides where a week starts (Sunday or Monday depends on the user's region).
+    // Injected so tests don't depend on the machine's locale.
+    private let calendar: Calendar
 
     /// Opens the log over a store and loads what is already saved: the workout in progress
     /// (if the app was closed mid-workout) and the history.
@@ -30,9 +33,11 @@ final class WorkoutLog {
     /// - Parameters:
     ///   - container: The store to read and write. The log keeps it alive.
     ///   - now: The clock used for start, finish and set times. Defaults to the real time.
-    init(container: ModelContainer, now: @escaping () -> Date = Date.init) {
+    ///   - calendar: Used to find the start of the week. Defaults to the user's calendar.
+    init(container: ModelContainer, now: @escaping () -> Date = Date.init, calendar: Calendar = .current) {
         self.container = container
         self.now = now
+        self.calendar = calendar
         // One fetch, newest first, then split: an unfinished workout is the active one,
         // everything else is history (already in the right order).
         let newestFirst = FetchDescriptor<Workout>(sortBy: [SortDescriptor(\.startedAt, order: .reverse)])
@@ -139,6 +144,25 @@ final class WorkoutLog {
         history.removeAll { $0 == workout }
         context.delete(workout)
         save()
+    }
+
+    /// Totals for finished workouts that started in the current calendar week.
+    ///
+    /// The workout in progress is left out until it's finished, so the numbers don't jump
+    /// around mid-session.
+    ///
+    /// - Returns: Workout, set and volume totals for this week; all zero if nothing yet.
+    func thisWeek() -> WeekSummary {
+        guard let week = calendar.dateInterval(of: .weekOfYear, for: now()) else {
+            return WeekSummary(workouts: 0, sets: 0, volumeKg: 0)
+        }
+        // History is already finished-only, so filtering by start date is enough.
+        let workouts = history.filter { week.contains($0.startedAt) }
+        return WeekSummary(
+            workouts: workouts.count,
+            sets: workouts.reduce(0) { $0 + $1.setCount },
+            volumeKg: workouts.reduce(0) { $0 + $1.totalVolumeKg }
+        )
     }
 
     /// Writes immediately rather than waiting for autosave, so a set logged just before the

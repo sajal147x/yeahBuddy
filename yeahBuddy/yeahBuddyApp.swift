@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-/// The app entry point: opens the store, creates the shared modules, and shows Home.
+/// The app entry point: opens the store, creates the shared modules, and shows the tabs.
 @main
 struct yeahBuddyApp: App {
     // The app's three modules, created once and handed to every screen via the environment.
@@ -23,15 +23,13 @@ struct yeahBuddyApp: App {
         _catalog = State(initialValue: ExerciseCatalog(container: container))
     }
 
-    /// One window showing Home, with the modules injected for every screen below it.
+    /// One window showing the tabs, with the modules injected for every screen below it.
     var body: some Scene {
         WindowGroup {
-            HomeView()
+            RootView()
                 .environment(log)
                 .environment(catalog)
                 .environment(restTimer)
-                // Scoreboard look: dark only for v1.
-                .preferredColorScheme(.dark)
         }
     }
 }

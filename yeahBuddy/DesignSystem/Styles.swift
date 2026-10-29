@@ -1,128 +1,99 @@
 import SwiftUI
 
-/// The tile look every card shares: a rounded surface with an optional color wash
-/// fading in from the top-left corner, floating on a soft glow (see `Elevation`).
-struct TileModifier: ViewModifier {
-    /// The wash color, usually a muscle group's tint. Nil for a plain tile.
-    var tint: Color?
+/// The card look every panel shares: a padded, rounded surface on a soft shadow.
+struct CardModifier: ViewModifier {
+    /// Inner padding. Lists inside cards pass a smaller value so rows can run edge to edge.
+    var padding: CGFloat = Spacing.lg
 
-    /// Pads the content and draws the tile background behind it.
+    /// Pads the content and draws the card background behind it.
     ///
-    /// - Parameter content: The view being styled as a tile.
-    /// - Returns: The content filling the available width on a rounded, glowing tile.
+    /// - Parameter content: The view being styled as a card.
+    /// - Returns: The content filling the available width on a rounded card.
     func body(content: Content) -> some View {
         content
-            .padding(Spacing.lg)
+            .padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
-                RoundedRectangle(cornerRadius: Radius.tile, style: .continuous)
+                RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
                     .fill(Color.surface)
-                    // The glow goes on the background shape only, so text and buttons
-                    // inside the tile stay crisp instead of each getting their own shadow.
-                    .glow(glowColor)
-                    .overlay {
-                        // The wash fades from 35% to 5% so text stays readable on top.
-                        if let tint {
-                            RoundedRectangle(cornerRadius: Radius.tile, style: .continuous)
-                                .fill(LinearGradient(
-                                    colors: [tint.opacity(0.35), tint.opacity(0.05)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ))
-                        }
-                    }
+                    // Shadow on the background shape only, so text inside stays crisp.
+                    .shadow(color: Shadow.color, radius: Shadow.radius, x: 0, y: Shadow.y)
             }
-    }
-
-    /// The glow under the tile: its own tint when it has one, faint white otherwise.
-    private var glowColor: Color {
-        if let tint {
-            return tint.opacity(Elevation.tintOpacity)
-        }
-        return Color.white.opacity(Elevation.plainOpacity)
     }
 }
 
 extension View {
-    /// Styles this view as a tile.
+    /// Styles this view as a card.
     ///
-    /// - Parameter tint: An optional color wash, e.g. `muscle.tint`.
-    /// - Returns: The view on a padded, rounded tile background.
-    func tile(tint: Color? = nil) -> some View {
-        modifier(TileModifier(tint: tint))
-    }
-
-    /// Makes this view float on a soft glow, using the shared `Elevation` values so tiles
-    /// and buttons lift off the canvas by the same amount.
-    ///
-    /// Apply it to a background shape, not to a view with text in it, or every piece of
-    /// text gets its own blurry shadow.
-    ///
-    /// - Parameter color: The glow color, already at the opacity wanted.
-    /// - Returns: The view with the glow drawn beneath it.
-    func glow(_ color: Color) -> some View {
-        shadow(color: color, radius: Elevation.radius, x: 0, y: Elevation.y)
+    /// - Parameter padding: Inner padding. Defaults to the standard card padding.
+    /// - Returns: The view on a padded, rounded card background.
+    func card(padding: CGFloat = Spacing.lg) -> some View {
+        modifier(CardModifier(padding: padding))
     }
 }
 
-/// A full-width, high-contrast button for the main action on a screen.
-/// It glows in its own color, like a tinted tile, so the main action stands out most.
+/// A full-width button for the main action on a screen, filled with the brand color.
 struct PrimaryButtonStyle: ButtonStyle {
-    /// The button's fill color. Defaults to the app's accent green.
-    var tint: Color = .accentColor
-
-    /// Draws the label on a filled, glowing, rounded background that dims while pressed.
+    /// Draws the label on a brand-colored rounded background that dims while pressed.
     ///
     /// - Parameter configuration: The label and pressed state from SwiftUI.
     /// - Returns: The styled button.
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(.headline, design: .rounded).weight(.bold))
-            // Black text reads best on the bright tints used for primary actions.
-            .foregroundStyle(.black)
+            .font(.system(.headline, weight: .bold))
+            .foregroundStyle(Color.onBrand)
             // 54pt tall: easy to hit with a thumb between sets.
             .frame(maxWidth: .infinity, minHeight: 54)
-            .background {
-                RoundedRectangle(cornerRadius: Radius.control, style: .continuous)
-                    .fill(tint)
-                    // Glow on the shape only, so the label text stays sharp.
-                    .glow(tint.opacity(Elevation.tintOpacity))
-            }
-            .opacity(configuration.isPressed ? 0.7 : 1)
+            .background(Color.brand, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+            .opacity(configuration.isPressed ? 0.75 : 1)
     }
 }
 
-/// A full-width button for secondary actions, sitting on the surface color.
+/// A full-width button for secondary actions: brand-colored text on a pale brand wash.
 struct SecondaryButtonStyle: ButtonStyle {
-    /// Draws the label on a raised surface background that dims while pressed.
+    /// Draws the label on a soft brand background that dims while pressed.
     ///
     /// - Parameter configuration: The label and pressed state from SwiftUI.
     /// - Returns: The styled button.
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(.headline, design: .rounded).weight(.semibold))
-            .foregroundStyle(Color.textPrimary)
+            .font(.system(.headline, weight: .semibold))
+            .foregroundStyle(Color.brand)
             .frame(maxWidth: .infinity, minHeight: 54)
-            .background(Color.surfaceRaised, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
-            .opacity(configuration.isPressed ? 0.7 : 1)
+            .background(Color.brandSoft, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+            .opacity(configuration.isPressed ? 0.75 : 1)
+    }
+}
+
+/// A small capsule button for quick actions inside cards, e.g. "+15s" or "Skip".
+struct ChipButtonStyle: ButtonStyle {
+    /// Draws the label on a raised capsule that dims while pressed.
+    ///
+    /// - Parameter configuration: The label and pressed state from SwiftUI.
+    /// - Returns: The styled button.
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.chip)
+            .foregroundStyle(Color.textPrimary)
+            .padding(.horizontal, 14)
+            .frame(minHeight: 34)
+            .background(Color.surfaceRaised, in: Capsule())
+            .opacity(configuration.isPressed ? 0.75 : 1)
     }
 }
 
 // Shorthands so call sites read `.buttonStyle(.primary)` like the built-in styles.
 extension ButtonStyle where Self == PrimaryButtonStyle {
-    /// The primary style in the accent color.
+    /// The primary style.
     static var primary: PrimaryButtonStyle { PrimaryButtonStyle() }
-
-    /// The primary style in a given color, e.g. a muscle group's tint.
-    ///
-    /// - Parameter tint: The fill color.
-    /// - Returns: A primary button style using that color.
-    static func primary(tint: Color) -> PrimaryButtonStyle {
-        PrimaryButtonStyle(tint: tint)
-    }
 }
 
 extension ButtonStyle where Self == SecondaryButtonStyle {
     /// The secondary style.
     static var secondary: SecondaryButtonStyle { SecondaryButtonStyle() }
+}
+
+extension ButtonStyle where Self == ChipButtonStyle {
+    /// The chip style.
+    static var chip: ChipButtonStyle { ChipButtonStyle() }
 }

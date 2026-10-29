@@ -1,50 +1,57 @@
 import SwiftUI
 
-/// A big number with a small uppercase label under it, e.g. "1,650 kg / VOLUME".
-/// Put it in `.tile()` for a standalone score tile, or in an HStack for a row of scores.
-struct Stat: View {
-    /// The number to show, already formatted.
-    let value: Text
-    /// The caption under the number. Shown in uppercase.
+/// One value as a screen shows it: the number, with a small label underneath,
+/// e.g. "1,650 kg" over "Volume". Pure data, so screens can build rows of these.
+struct StatValue: Identifiable {
+    /// The formatted number, e.g. "1,650".
+    let number: String
+    /// An optional unit shown smaller after the number, e.g. "kg".
+    var unit: String? = nil
+    /// The caption under the number, e.g. "Volume".
     let label: String
-    /// The number's font. Pick from the `score` fonts in `Theme`.
-    var font: Font = .score
 
-    /// Creates a stat from a plain string value.
+    /// Stable identity for `ForEach`; labels are unique within a row.
+    var id: String { label }
+}
+
+/// A number with a small label under it. Put several in an HStack for a row of totals.
+struct Stat: View {
+    /// The number, already styled (usually via `Text.amount`).
+    let value: Text
+    /// The caption under the number, e.g. "Volume".
+    let label: String
+
+    /// Creates a stat from any `Text`, e.g. `Text(date, style: .timer)` which ticks by itself.
     ///
     /// - Parameters:
-    ///   - value: The formatted number, e.g. "1,650 kg".
-    ///   - label: The caption, e.g. "Volume".
-    ///   - font: The number's font.
-    init(value: String, label: String, font: Font = .score) {
-        self.init(value: Text(value), label: label, font: font)
-    }
-
-    /// Creates a stat from a `Text`, for values that render themselves,
-    /// e.g. `Text(date, style: .timer)` which keeps ticking on its own.
-    ///
-    /// - Parameters:
-    ///   - value: The text to show as the number.
+    ///   - value: The number to show, with its font already applied.
     ///   - label: The caption.
-    ///   - font: The number's font.
-    init(value: Text, label: String, font: Font = .score) {
+    init(value: Text, label: String) {
         self.value = value
         self.label = label
-        self.font = font
+    }
+
+    /// Creates a stat from plain values, styled with small decimals and unit.
+    ///
+    /// - Parameters:
+    ///   - stat: The number, unit and label.
+    ///   - size: Point size of the number's whole part.
+    init(_ stat: StatValue, size: CGFloat = 28) {
+        self.init(value: .amount(stat.number, unit: stat.unit, size: size), label: stat.label)
     }
 
     /// The number stacked over its label, left-aligned and filling its share of the row.
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
+        VStack(alignment: .leading, spacing: 2) {
             value
-                .font(font)
+                .foregroundStyle(Color.textPrimary)
                 .lineLimit(1)
                 // Shrinks long values like "12,450 kg" instead of wrapping or clipping.
                 .minimumScaleFactor(0.6)
-                // Digits roll when the value changes, like a scoreboard.
+                // Digits roll when the value changes.
                 .contentTransition(.numericText())
-            Text(label.uppercased())
-                .font(.tileLabel)
+            Text(label)
+                .font(.label)
                 .foregroundStyle(Color.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -53,9 +60,10 @@ struct Stat: View {
 
 #Preview {
     HStack {
-        Stat(value: "1,650 kg", label: "Volume").tile()
-        Stat(value: "12", label: "Sets").tile()
+        Stat(StatValue(number: "1,650", unit: "kg", label: "Volume"))
+        Stat(StatValue(number: "12", label: "Sets"))
     }
+    .card()
     .padding()
     .background(Color.canvas)
 }

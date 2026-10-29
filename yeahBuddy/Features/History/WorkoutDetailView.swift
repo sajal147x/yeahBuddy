@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// A finished workout: its totals, then every exercise with its sets.
+/// A finished workout: its date and totals, then every exercise with its sets.
 struct WorkoutDetailView: View {
     /// The workout to show.
     let workout: Workout
@@ -11,18 +11,21 @@ struct WorkoutDetailView: View {
     // Whether the "Delete this workout?" dialog is showing.
     @State private var confirmingDelete = false
 
-    /// The totals tile, one tile per exercise, and a Delete button in the toolbar.
+    /// The summary card, one card per exercise, and a Delete button in the toolbar.
     var body: some View {
         ScrollView {
-            VStack(spacing: Spacing.md) {
-                HStack(alignment: .top) {
-                    ForEach(workout.stats(in: unit), id: \.label) { stat in
-                        Stat(value: stat.value, label: stat.label, font: .scoreSmall)
+            VStack(alignment: .leading, spacing: Spacing.md) {
+                VStack(alignment: .leading, spacing: Spacing.md) {
+                    Text(workout.subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.textSecondary)
+                    HStack(alignment: .top) {
+                        ForEach(workout.stats(in: unit)) { Stat($0) }
                     }
                 }
-                .tile(tint: workout.tint)
+                .card()
                 ForEach(workout.orderedEntries) { entry in
-                    entryTile(entry)
+                    entryCard(entry)
                 }
             }
             .padding(Spacing.lg)
@@ -46,30 +49,28 @@ struct WorkoutDetailView: View {
         }
     }
 
-    /// One exercise as a tile: its name, then a row per set.
+    /// One exercise as a card: its name and muscle tag, then a read-only row per set.
     ///
     /// - Parameter entry: The exercise entry to show.
-    /// - Returns: The tile, tinted by the exercise's muscle group.
-    private func entryTile(_ entry: ExerciseEntry) -> some View {
-        let tint = entry.exercise?.muscle.tint ?? .accentColor
-        return VStack(alignment: .leading, spacing: Spacing.sm) {
+    /// - Returns: The card.
+    private func entryCard(_ entry: ExerciseEntry) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             Text(entry.exercise?.name ?? "Exercise")
-                .font(.tileTitle)
-            ForEach(Array(entry.orderedSets.enumerated()), id: \.element.id) { index, set in
-                HStack {
-                    Text("\(index + 1)")
-                        .font(.tileLabel)
-                        .foregroundStyle(Color.textSecondary)
-                        .frame(width: 24, alignment: .leading)
-                    Text(unit.format(kilograms: set.weightKg))
-                        .font(.scoreSmall)
-                    Text("×")
-                        .foregroundStyle(Color.textSecondary)
-                    Text("\(set.reps)")
-                        .font(.scoreSmall)
-                }
+                .font(.cardTitle)
+                .foregroundStyle(Color.textPrimary)
+            if let muscle = entry.exercise?.muscle {
+                MuscleTag(muscle: muscle)
             }
+            ForEach(Array(entry.orderedSets.enumerated()), id: \.element.id) { index, set in
+                SetRow(
+                    number: index + 1,
+                    weight: unit.formatNumber(kilograms: set.weightKg),
+                    unit: unit.rawValue,
+                    reps: set.reps
+                )
+            }
+            .padding(.top, Spacing.xs)
         }
-        .tile(tint: tint)
+        .card()
     }
 }

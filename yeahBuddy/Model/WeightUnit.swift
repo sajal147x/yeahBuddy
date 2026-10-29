@@ -73,7 +73,15 @@ nonisolated enum WeightUnit: String, CaseIterable, Identifiable {
     /// - Parameter kg: A stored weight in kilograms.
     /// - Returns: The weight with its unit, using the user's locale for digits and grouping.
     func format(kilograms kg: Double) -> String {
-        let value = value(fromKilograms: kg).formatted(.number.precision(.fractionLength(0...1)))
-        return "\(value) \(rawValue)"
+        "\(formatNumber(kilograms: kg)) \(rawValue)"
+    }
+
+    /// Like `format(kilograms:)` but without the unit, e.g. "82.5", for layouts that style
+    /// the number and the unit separately.
+    ///
+    /// - Parameter kg: A stored weight in kilograms.
+    /// - Returns: The number in this unit with at most one decimal.
+    func formatNumber(kilograms kg: Double) -> String {
+        value(fromKilograms: kg).formatted(.number.precision(.fractionLength(0...1)))
     }
 }

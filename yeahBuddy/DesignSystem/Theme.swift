@@ -1,7 +1,9 @@
 import SwiftUI
 
 // Design tokens. Views use these instead of raw numbers or colors, so the whole look can be
-// tuned from this one file.
+// tuned from this one file. The look is inspired by Sumeria: calm mint-gray surfaces, white
+// cards, one deep teal brand color, and big left-aligned titles. Every color has a light
+// and a dark value and follows the phone's appearance setting.
 
 /// Spacing steps. Use these for padding and stack spacing instead of literal numbers.
 enum Spacing {
@@ -9,9 +11,9 @@ enum Spacing {
     static let xs: CGFloat = 4
     /// 8pt: between small related items.
     static let sm: CGFloat = 8
-    /// 12pt: between items inside a tile, and between tiles.
+    /// 12pt: between items inside a card, and between cards.
     static let md: CGFloat = 12
-    /// 16pt: tile padding and screen side margins.
+    /// 16pt: card padding and screen side margins.
     static let lg: CGFloat = 16
     /// 24pt: between major sections.
     static let xl: CGFloat = 24
@@ -19,65 +21,81 @@ enum Spacing {
 
 /// Corner radii, always drawn with the continuous (squircle) style.
 enum Radius {
-    /// Tiles and cards.
-    static let tile: CGFloat = 22
-    /// Buttons and other controls.
-    static let control: CGFloat = 14
+    /// Cards.
+    static let card: CGFloat = 22
+    /// Full-width buttons and text fields.
+    static let control: CGFloat = 16
 }
 
-/// How far tiles appear to float above the canvas.
-///
-/// On a true-black canvas a dark drop shadow is invisible, so tiles cast a soft glow
-/// instead: their own tint for colored tiles, faint white for plain ones.
-enum Elevation {
-    /// How soft the glow is; larger spreads it wider.
-    static let radius: CGFloat = 18
-    /// How far the glow sits below the tile, so light seems to come from above.
-    static let y: CGFloat = 8
-    /// Glow strength under a tinted tile.
-    static let tintOpacity: Double = 0.35
-    /// Glow strength under a plain tile. Kept faint so plain tiles stay quieter than tinted ones.
-    static let plainOpacity: Double = 0.08
+/// The soft drop shadow under cards and the tab bar. Visible in light mode only: on the dark
+/// background a shadow can't be seen, so dark cards rely on their lighter fill instead.
+enum Shadow {
+    /// The shadow color; clear in dark mode.
+    static let color = Color(light: UIColor(white: 0, alpha: 0.07), dark: .clear)
+    /// How soft the shadow is.
+    static let radius: CGFloat = 14
+    /// How far below the card it sits, so light seems to come from above.
+    static let y: CGFloat = 4
 }
 
 extension Color {
-    /// Page background: true black in dark mode, like a scoreboard.
-    static let canvas = Color(light: UIColor(white: 0.95, alpha: 1), dark: .black)
-    /// Tile surface sitting on the canvas.
-    static let surface = Color(light: .white, dark: UIColor(white: 0.11, alpha: 1))
-    /// Controls placed on a tile.
-    static let surfaceRaised = Color(light: UIColor(white: 0.92, alpha: 1), dark: UIColor(white: 0.18, alpha: 1))
-    /// Main text: numbers and titles.
-    static let textPrimary = Color.primary
+    /// Page background: pale mint-gray in light mode, deep teal-black in dark.
+    static let canvas = Color(light: rgb(0.933, 0.953, 0.949), dark: rgb(0.043, 0.090, 0.086))
+    /// Card surface sitting on the canvas.
+    static let surface = Color(light: .white, dark: rgb(0.090, 0.145, 0.141))
+    /// Controls placed on a card: chips, stepper buttons, search fields.
+    static let surfaceRaised = Color(light: rgb(0.886, 0.925, 0.918), dark: rgb(0.133, 0.200, 0.192))
+    /// The one brand color: deep teal in light mode, mint in dark mode so it stays readable.
+    static let brand = Color(light: rgb(0.055, 0.290, 0.298), dark: rgb(0.498, 0.847, 0.769))
+    /// Text and icons drawn on top of `brand`.
+    static let onBrand = Color(light: .white, dark: rgb(0.043, 0.090, 0.086))
+    /// Fill for secondary buttons: a pale wash of the brand color.
+    static let brandSoft = Color(light: rgb(0.788, 0.871, 0.859), dark: rgb(0.118, 0.239, 0.227))
+    /// Main text: numbers and titles. A near-black teal rather than pure black.
+    static let textPrimary = Color(light: rgb(0.063, 0.141, 0.137), dark: rgb(0.918, 0.949, 0.945))
     /// Supporting text: labels, dates, captions.
-    static let textSecondary = Color.secondary
+    static let textSecondary = Color(light: rgb(0.369, 0.431, 0.424), dark: rgb(0.576, 0.647, 0.635))
+    /// Thin separators inside cards.
+    static let divider = Color(light: rgb(0.886, 0.914, 0.910), dark: rgb(0.161, 0.224, 0.216))
 
     /// Creates a color that switches with light and dark mode.
-    ///
-    /// The app is dark-only in v1, but the light values are kept so light mode is a
-    /// one-line change later.
     ///
     /// - Parameters:
     ///   - light: The color in light mode.
     ///   - dark: The color in dark mode.
-    private init(light: UIColor, dark: UIColor) {
+    init(light: UIColor, dark: UIColor) {
         self.init(uiColor: UIColor { traits in
             traits.userInterfaceStyle == .dark ? dark : light
         })
     }
+
+    /// Shorthand for an opaque sRGB color, to keep the palette above readable.
+    ///
+    /// - Parameters:
+    ///   - red: Red, 0 to 1.
+    ///   - green: Green, 0 to 1.
+    ///   - blue: Blue, 0 to 1.
+    /// - Returns: The color.
+    private static func rgb(_ red: CGFloat, _ green: CGFloat, _ blue: CGFloat) -> UIColor {
+        UIColor(red: red, green: green, blue: blue, alpha: 1)
+    }
 }
 
-// All number fonts use monospaced digits so values don't jiggle sideways as they change
-// (e.g. a ticking timer or a stepper going from 19 to 20).
+// Sumeria uses a plain grotesk, so fonts use SF Pro's default design (not rounded). Number
+// fonts use monospaced digits so values don't jiggle sideways as they change.
 extension Font {
-    /// Hero numbers, e.g. the rest countdown.
-    static let scoreHero = Font.system(size: 64, weight: .heavy, design: .rounded).monospacedDigit()
-    /// Tile numbers, e.g. volume or set count.
-    static let score = Font.system(size: 32, weight: .bold, design: .rounded).monospacedDigit()
+    /// Big left-aligned screen titles, e.g. "History".
+    static let screenTitle = Font.system(size: 34, weight: .bold)
+    /// Card and section titles.
+    static let cardTitle = Font.system(.title3, weight: .bold)
+    /// Hero numbers, e.g. the rest countdown or the live workout clock.
+    static let amountHero = Font.system(size: 56, weight: .bold).monospacedDigit()
+    /// Card numbers, e.g. volume or set count.
+    static let amount = Font.system(size: 28, weight: .bold).monospacedDigit()
     /// Numbers inside rows, e.g. a logged set.
-    static let scoreSmall = Font.system(size: 20, weight: .semibold, design: .rounded).monospacedDigit()
-    /// Tile and section titles.
-    static let tileTitle = Font.system(.title3, design: .rounded).weight(.bold)
-    /// Small uppercase labels under numbers.
-    static let tileLabel = Font.system(.caption, design: .rounded).weight(.semibold)
+    static let amountSmall = Font.system(size: 19, weight: .semibold).monospacedDigit()
+    /// Small labels under numbers and above sections.
+    static let label = Font.system(.footnote, weight: .medium)
+    /// Text on chips and small buttons.
+    static let chip = Font.system(.subheadline, weight: .semibold)
 }
