@@ -108,6 +108,9 @@ extension Font {
     static let amountHero = Font.system(size: 56, weight: .bold).monospacedDigit()
     /// Card numbers, e.g. volume or set count.
     static let amount = Font.system(size: 28, weight: .bold).monospacedDigit()
+    /// Numbers being entered, e.g. the stepper values: a step below `amount` so inputs
+    /// don't outweigh the logged sets next to them.
+    static let amountInput = Font.system(size: 22, weight: .bold).monospacedDigit()
     /// Numbers inside rows, e.g. a logged set.
     static let amountSmall = Font.system(size: 19, weight: .semibold).monospacedDigit()
     /// Small labels under numbers and above sections.

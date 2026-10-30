@@ -52,6 +52,26 @@ struct RestTimerTests {
         #expect(timer.remaining == 15)
     }
 
+    /// Total is the full length of this rest, including every +15s, so the user can see how
+    /// long they actually rested. A rest started after the last one ran out counts from zero.
+    @Test func totalIncludesExtensionsAndResetsForANewRest() {
+        let timer = makeTimer()
+        #expect(timer.total == 0)
+
+        timer.start(seconds: 90)
+        clock.advance(by: 80)
+        timer.extend(by: 15)
+        timer.extend(by: 15)
+        #expect(timer.total == 120)
+
+        clock.advance(by: 60)
+        timer.extend(by: 15)
+        #expect(timer.total == 15)
+
+        timer.skip()
+        #expect(timer.total == 0)
+    }
+
     /// Skip ends the rest right away.
     @Test func skippingEndsTheRestImmediately() {
         let timer = makeTimer()

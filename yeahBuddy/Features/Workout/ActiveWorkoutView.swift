@@ -11,6 +11,19 @@ struct ActiveWorkoutView: View {
     @State private var pickingExercise = false
     // Whether the "Discard this workout?" dialog is showing.
     @State private var confirmingDiscard = false
+    // Which exercise shows as a full card; the rest are collapsed rows. A freshly opened
+    // screen shows the newest.
+    @State private var open: OpenExercise = .newest
+
+    /// The choices for which exercise card is open. At most one is open at a time.
+    private enum OpenExercise {
+        /// The most recently added exercise, e.g. right after adding one.
+        case newest
+        /// One the user tapped open.
+        case entry(ExerciseEntry)
+        /// Everything folded, after the user collapsed the open card.
+        case none
+    }
 
     /// Scrolling cards with Finish pinned to the bottom, plus the picker sheet and discard dialog.
     var body: some View {
@@ -73,7 +86,21 @@ struct ActiveWorkoutView: View {
             .card()
             RestBar()
             ForEach(workout.orderedEntries) { entry in
-                ExerciseCard(entry: entry, unit: unit)
+                // `===` compares the model objects themselves, so this view doesn't need
+                // SwiftData for their identifiers.
+                if entry === openEntry(in: workout) {
+                    ExerciseCard(entry: entry, unit: unit, previous: previousSet(for: entry)) {
+                        withAnimation(.snappy) {
+                            open = .none
+                        }
+                    }
+                } else {
+                    CollapsedExerciseRow(entry: entry, unit: unit) {
+                        withAnimation(.snappy) {
+                            open = .entry(entry)
+                        }
+                    }
+                }
             }
             Button("Add Exercise", systemImage: "plus") {
                 pickingExercise = true
@@ -83,6 +110,44 @@ struct ActiveWorkoutView: View {
         .padding(Spacing.lg)
         // Cards slide in and out when exercises are added or removed.
         .animation(.snappy, value: workout.entries.count)
+        .onChange(of: workout.entries.count) { oldCount, newCount in
+            // A newly added exercise is the one about to be logged, so open it and fold
+            // the others. Removing one keeps whatever was open, if it's still there.
+            if newCount > oldCount {
+                open = .newest
+            }
+        }
+    }
+
+    /// Which exercise shows as a full card.
+    ///
+    /// - Parameter workout: The workout in progress.
+    /// - Returns: The open exercise, or nil when everything is collapsed. A tapped exercise
+    ///   that has since been removed falls back to the newest one.
+    private func openEntry(in workout: Workout) -> ExerciseEntry? {
+        switch open {
+        case .newest:
+            return workout.orderedEntries.last
+        case .entry(let entry):
+            if workout.entries.contains(where: { $0 === entry }) {
+                return entry
+            }
+            return workout.orderedEntries.last
+        case .none:
+            return nil
+        }
+    }
+
+    /// Where this exercise left off last session, for pre-filling its card.
+    ///
+    /// - Parameter entry: An exercise in the workout in progress.
+    /// - Returns: The final set from the last finished workout with that exercise, or nil if
+    ///   it has never been done (or its exercise was deleted from the catalog).
+    private func previousSet(for entry: ExerciseEntry) -> SetEntry? {
+        if let exercise = entry.exercise {
+            return log.lastSet(of: exercise)
+        }
+        return nil
     }
 
     /// Minimize on the left (keeps the workout running), a More menu with Discard on the right.
@@ -117,6 +182,7 @@ private struct RestBar: View {
             if restTimer.isRunning {
                 RestCountdown(
                     remaining: restTimer.remaining,
+                    total: restTimer.total,
                     onExtend: { restTimer.extend(by: 15) },
                     onSkip: { restTimer.skip() }
                 )

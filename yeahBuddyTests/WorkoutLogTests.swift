@@ -157,6 +157,59 @@ struct WorkoutLogTests {
         #expect(names == ["Bench Press", "Squat"])
     }
 
+    /// A new exercise card starts from where you left off: the final set of the most recent
+    /// finished workout that has the exercise, not an older one.
+    @Test func lastSetIsTheFinalSetOfTheNewestFinishedWorkout() {
+        let log = makeLog()
+        let bench = Exercise(name: "Bench Press", muscle: .chest)
+        log.logSet(weightKg: 80, reps: 8, of: bench)
+        log.finish()
+        clock.advance(by: 86_400)
+        log.logSet(weightKg: 100, reps: 5, of: bench)
+        log.logSet(weightKg: 90, reps: 8, of: bench)
+        log.finish()
+
+        let last = try! #require(log.lastSet(of: bench))
+
+        #expect(last.weightKg == 90)
+        #expect(last.reps == 8)
+    }
+
+    /// An exercise never done before has no last set, so its card falls back to the empty bar.
+    @Test func lastSetIsNilForAnExerciseNeverDone() {
+        let log = makeLog()
+        log.logSet(weightKg: 100, reps: 5, of: Exercise(name: "Squat", muscle: .legs))
+        log.finish()
+
+        #expect(log.lastSet(of: Exercise(name: "Bench Press", muscle: .chest)) == nil)
+    }
+
+    /// A workout where the exercise was added but never logged doesn't hide the one before it.
+    @Test func lastSetSkipsAWorkoutWhereTheExerciseHadNoSets() {
+        let log = makeLog()
+        let bench = Exercise(name: "Bench Press", muscle: .chest)
+        log.logSet(weightKg: 80, reps: 8, of: bench)
+        log.finish()
+        clock.advance(by: 86_400)
+        log.add(bench)
+        log.logSet(weightKg: 100, reps: 5, of: Exercise(name: "Squat", muscle: .legs))
+        log.finish()
+
+        #expect(log.lastSet(of: bench)?.weightKg == 80)
+    }
+
+    /// The workout in progress doesn't count: its card already shows its own sets.
+    @Test func lastSetIgnoresTheWorkoutInProgress() {
+        let log = makeLog()
+        let bench = Exercise(name: "Bench Press", muscle: .chest)
+        log.logSet(weightKg: 80, reps: 8, of: bench)
+        log.finish()
+        clock.advance(by: 86_400)
+        log.logSet(weightKg: 100, reps: 5, of: bench)
+
+        #expect(log.lastSet(of: bench)?.weightKg == 80)
+    }
+
     /// This Week counts only finished workouts started since the start of the current week
     /// (Monday here), so last week's session and the one still in progress are left out.
     @Test func thisWeekTotalsFinishedWorkoutsSinceTheWeekStarted() {

@@ -34,18 +34,32 @@ extension View {
 
 /// A full-width button for the main action on a screen, filled with the brand color.
 struct PrimaryButtonStyle: ButtonStyle {
-    /// Draws the label on a brand-colored rounded background that dims while pressed.
+    /// A shorter capsule for actions repeated inside a card (Log Set), so the button doesn't
+    /// outweigh the content around it. False is the tall screen-level button.
+    var isCompact = false
+
+    /// Draws the label on a brand-colored background that dims while pressed.
     ///
     /// - Parameter configuration: The label and pressed state from SwiftUI.
     /// - Returns: The styled button.
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(.headline, weight: .bold))
-            .foregroundStyle(Color.onBrand)
-            // 54pt tall: easy to hit with a thumb between sets.
-            .frame(maxWidth: .infinity, minHeight: 54)
-            .background(Color.brand, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
-            .opacity(configuration.isPressed ? 0.75 : 1)
+        if isCompact {
+            configuration.label
+                .font(.system(.subheadline, weight: .bold))
+                .foregroundStyle(Color.onBrand)
+                // 44pt: still the minimum comfortable touch target.
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .background(Color.brand, in: Capsule())
+                .opacity(configuration.isPressed ? 0.75 : 1)
+        } else {
+            configuration.label
+                .font(.system(.headline, weight: .bold))
+                .foregroundStyle(Color.onBrand)
+                // 54pt tall: easy to hit with a thumb between sets.
+                .frame(maxWidth: .infinity, minHeight: 54)
+                .background(Color.brand, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+                .opacity(configuration.isPressed ? 0.75 : 1)
+        }
     }
 }
 
@@ -86,6 +100,9 @@ struct ChipButtonStyle: ButtonStyle {
 extension ButtonStyle where Self == PrimaryButtonStyle {
     /// The primary style.
     static var primary: PrimaryButtonStyle { PrimaryButtonStyle() }
+
+    /// The primary style as a shorter capsule, for in-card actions like Log Set.
+    static var primaryCompact: PrimaryButtonStyle { PrimaryButtonStyle(isCompact: true) }
 }
 
 extension ButtonStyle where Self == SecondaryButtonStyle {

@@ -165,6 +165,27 @@ final class WorkoutLog {
         )
     }
 
+    /// The set you finished on the last time you did an exercise, so a new card can start
+    /// from that weight and reps instead of the empty bar.
+    ///
+    /// Only finished workouts count: the one in progress already shows its own sets, and
+    /// pre-filling from it would just echo them back. A workout where the exercise was added
+    /// but no sets were logged is skipped, so it doesn't hide the session before it.
+    ///
+    /// - Parameter exercise: The exercise to look up.
+    /// - Returns: The final set from the newest finished workout with sets of `exercise`,
+    ///   or nil if it has never been done.
+    func lastSet(of exercise: Exercise) -> SetEntry? {
+        // History is newest first, so the first workout with a matching set wins.
+        for workout in history {
+            let entry = workout.entries.first { $0.exercise == exercise }
+            if let last = entry?.orderedSets.last {
+                return last
+            }
+        }
+        return nil
+    }
+
     /// Writes immediately rather than waiting for autosave, so a set logged just before the
     /// app is killed mid-workout is not lost.
     private func save() {
