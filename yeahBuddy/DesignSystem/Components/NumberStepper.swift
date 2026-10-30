@@ -53,19 +53,10 @@ struct NumberStepper: View {
                 draft = ""
             }
         }
-        .toolbar {
-            // Only the stepper being typed into adds Done; otherwise every stepper on screen
-            // would add its own and the keyboard bar would show a row of them.
-            if typing {
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Done") {
-                        typing = false
-                    }
-                    .fontWeight(.semibold)
-                }
-            }
-        }
+        // No Done button here: the number pad has no return key, so the screen hosting the
+        // steppers adds one with `.keyboardDoneButton()`. One per screen, because a keyboard
+        // toolbar per stepper would show a row of Done buttons, and adding it only while
+        // typing never reached the on-screen keyboard.
     }
 
     /// The big number. Tapping it swaps in a text field with the number pad up.

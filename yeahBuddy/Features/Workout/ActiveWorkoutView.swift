@@ -25,7 +25,7 @@ struct ActiveWorkoutView: View {
         case none
     }
 
-    /// Scrolling cards with Finish pinned to the bottom, plus the picker sheet and discard dialog.
+    /// Scrolling cards with Finish in the top bar, plus the picker sheet and discard dialog.
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -35,16 +35,10 @@ struct ActiveWorkoutView: View {
                 }
             }
             .background(Color.canvas)
-            // Finish stays reachable however long the workout gets.
-            .safeAreaInset(edge: .bottom) {
-                Button("Finish Workout") {
-                    restTimer.skip()
-                    log.finish()
-                }
-                .buttonStyle(.primary)
-                .padding(.horizontal, Spacing.lg)
-                .padding(.bottom, Spacing.sm)
-            }
+            // Any scroll puts the keyboard away, so typing a weight never traps the screen.
+            .scrollDismissesKeyboard(.immediately)
+            // The steppers' number pads have no return key; this gives them one Done button.
+            .keyboardDoneButton()
             .navigationTitle(log.active?.title ?? "Workout")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbar }
@@ -150,7 +144,8 @@ struct ActiveWorkoutView: View {
         return nil
     }
 
-    /// Minimize on the left (keeps the workout running), a More menu with Discard on the right.
+    /// Minimize on the left (keeps the workout running); Finish and a More menu with Discard
+    /// on the right.
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
@@ -158,6 +153,17 @@ struct ActiveWorkoutView: View {
             Button("Minimize", systemImage: "chevron.down") {
                 dismiss()
             }
+        }
+        // Up here rather than pinned to the bottom, where it covered Log Set and the steppers.
+        // It's needed once per workout, so it doesn't earn space beside the logging controls.
+        ToolbarItem(placement: .topBarTrailing) {
+            Button("Finish") {
+                restTimer.skip()
+                log.finish()
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Color.brand)
+            .fontWeight(.semibold)
         }
         ToolbarItem(placement: .topBarTrailing) {
             Menu("More", systemImage: "ellipsis") {

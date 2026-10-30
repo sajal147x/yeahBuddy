@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// One exercise in the workout in progress: its logged sets and the controls to log the next.
+/// One exercise in the workout in progress: its logged sets and an Add Set button that opens
+/// the pop-up for logging the next one.
 struct ExerciseCard: View {
     /// The exercise entry this card shows.
     let entry: ExerciseEntry
@@ -13,14 +14,17 @@ struct ExerciseCard: View {
 
     @Environment(WorkoutLog.self) private var log
     @Environment(RestTimer.self) private var restTimer
-    // The stepper values for the next set, in `unit`. Converted to kg only when logging.
+    // The values for the next set, in `unit`, edited in the Add Set pop-up. Kept here so they
+    // survive between pop-ups. Converted to kg only when logging.
     @State private var weight: Double
     @State private var reps: Double
+    // Whether the Add Set pop-up is showing.
+    @State private var addingSet = false
 
     // How long the rest timer runs after each set. A common default for hypertrophy work.
     private static let restSeconds: TimeInterval = 90
 
-    /// Creates a card, pre-filling the steppers so repeating the last set is one tap.
+    /// Creates a card, pre-filling the next set so repeating the last one needs no changes.
     ///
     /// - Parameters:
     ///   - entry: The exercise entry to show.
@@ -41,7 +45,7 @@ struct ExerciseCard: View {
         _reps = State(initialValue: Double(last?.reps ?? 8))
     }
 
-    /// Header, one row per logged set, the two steppers, then Log Set.
+    /// Header, one row per logged set, then Add Set.
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             header
@@ -70,16 +74,25 @@ struct ExerciseCard: View {
                     .font(.label)
                     .foregroundStyle(Color.textSecondary)
             }
-            HStack {
-                NumberStepper(value: $weight, step: unit.step, label: unit.rawValue)
-                NumberStepper(value: $reps, step: 1, label: "Reps", allowsDecimals: false, format: { "\(Int($0))" })
+            // Opens the pop-up rather than logging straight away, so a stray tap here is
+            // harmless: logging always takes the pop-up's own Add Set as well.
+            Button("Add Set", systemImage: "plus") {
+                addingSet = true
             }
-            Button("Log Set", action: logSet)
-                .buttonStyle(.primaryCompact)
-                // A set with zero reps isn't a set.
-                .disabled(reps < 1)
+            .buttonStyle(.secondary)
         }
         .card()
+        .sheet(isPresented: $addingSet) {
+            AddSetSheet(
+                exerciseName: entry.exercise?.name ?? "Exercise",
+                setNumber: entry.sets.count + 1,
+                unit: unit,
+                previous: previous,
+                weight: $weight,
+                reps: $reps,
+                onAdd: logSet
+            )
+        }
     }
 
     /// The exercise name and muscle tag, with a menu to remove the exercise.
@@ -123,7 +136,7 @@ struct ExerciseCard: View {
         }
     }
 
-    /// Logs the stepper values as a new set and starts the rest timer.
+    /// Logs the pop-up's values as a new set and starts the rest timer.
     private func logSet() {
         guard let exercise = entry.exercise else {
             return
