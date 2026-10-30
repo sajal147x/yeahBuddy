@@ -25,7 +25,7 @@ Inspired by Sumeria (references pulled from Mobbin):
 - **Big left-aligned screen titles** with a summary line under them, instead of navigation bars on tab roots.
 - **Numbers with small decimals and units**, e.g. "82" big then ".5 kg" small (`Text.amount`).
 - **Muscle colors are small accents only:** a colored dot and label, never a whole card.
-- **Floating pill tab bar:** Home, History, Exercises.
+- **Floating pill tab bar:** Home, History, Exercises. The system iOS 26 tab bar (Liquid Glass), tinted with the brand color.
 - **Light and dark**, following the system. Dark is a deep teal-black with mint as the brand color.
 
 ## Modules

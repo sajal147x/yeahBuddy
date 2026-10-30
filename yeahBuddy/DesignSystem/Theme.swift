@@ -43,7 +43,7 @@ enum Radius {
     static let control: CGFloat = 16
 }
 
-/// The soft drop shadow under cards and the tab bar. Visible in light mode only: on the dark
+/// The soft drop shadow under cards. Visible in light mode only: on the dark
 /// background a shadow can't be seen, so dark cards rely on their lighter fill instead.
 enum Shadow {
     /// The shadow color; clear in dark mode.

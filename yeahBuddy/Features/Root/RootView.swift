@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The app's three tabs, in the order they appear in the tab bar.
-enum AppTab: String, TabBarItem {
+enum AppTab: String, Hashable {
     case home, history, exercises
 
     /// The label under the tab's icon.
@@ -23,42 +23,34 @@ enum AppTab: String, TabBarItem {
     }
 }
 
-/// The top-level screen: the selected tab's content with the floating tab bar over it.
+/// The top-level screen: the system tab bar with Home, History and Exercises.
+///
+/// The system bar is used rather than a custom one so it gets iOS 26's Liquid Glass, the
+/// sliding selection bubble and shrink-on-scroll for free. Screens scroll underneath it,
+/// which is what lets the glass show through.
 struct RootView: View {
     // Shared with Home's settings menu and restored on the next launch.
     @AppStorage("appearance") private var appearance: AppAppearance = .system
     // Which tab is showing. Starts on Home every launch.
     @State private var tab: AppTab = .home
 
-    /// The current tab, with the tab bar pinned to the bottom safe area.
+    /// The three tabs. Each keeps its own navigation stack and scroll position when you switch.
     var body: some View {
-        // Each tab keeps its own navigation stack, so switching tabs doesn't lose your place.
-        ZStack {
-            page(HomeView(), for: .home)
-            page(HistoryView(), for: .history)
-            page(ExercisesView(), for: .exercises)
+        TabView(selection: $tab) {
+            Tab(AppTab.home.title, systemImage: AppTab.home.systemImage, value: AppTab.home) {
+                HomeView()
+            }
+            Tab(AppTab.history.title, systemImage: AppTab.history.systemImage, value: AppTab.history) {
+                HistoryView()
+            }
+            Tab(AppTab.exercises.title, systemImage: AppTab.exercises.systemImage, value: AppTab.exercises) {
+                ExercisesView()
+            }
         }
-        // A safe-area inset (not an overlay) so scrolling content stops above the bar
-        // instead of hiding behind it.
-        .safeAreaInset(edge: .bottom) {
-            FloatingTabBar(selection: $tab)
-                .padding(.bottom, Spacing.xs)
-        }
+        // The selected tab's icon and label in the brand teal (mint in dark mode).
+        .tint(Color.brand)
+        // Scrolling down a long list shrinks the bar out of the way; scrolling up brings it back.
+        .tabBarMinimizeBehavior(.onScrollDown)
         .preferredColorScheme(appearance.colorScheme)
-    }
-
-    /// Shows a tab's screen only while its tab is selected. Hidden tabs stay alive (keeping
-    /// scroll position and navigation) but can't be seen, tapped or read by VoiceOver.
-    ///
-    /// - Parameters:
-    ///   - content: The tab's screen.
-    ///   - owner: The tab that screen belongs to.
-    /// - Returns: The screen, visible only when `owner` is selected.
-    private func page(_ content: some View, for owner: AppTab) -> some View {
-        let isShowing = tab == owner
-        return content
-            .opacity(isShowing ? 1 : 0)
-            .allowsHitTesting(isShowing)
-            .accessibilityHidden(!isShowing)
     }
 }
