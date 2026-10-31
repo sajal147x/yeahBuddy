@@ -49,18 +49,19 @@ struct WorkoutDetailView: View {
         }
     }
 
-    /// One exercise as a card: its name and muscle tag, then a read-only row per set.
+    /// One exercise on a card lit by its muscle's color, like the live workout: the muscle
+    /// pill, its name, then a read-only row per set.
     ///
     /// - Parameter entry: The exercise entry to show.
     /// - Returns: The card.
     private func entryCard(_ entry: ExerciseEntry) -> some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
+            if let muscle = entry.exercise?.muscle {
+                MusclePill(muscle: muscle)
+            }
             Text(entry.exercise?.name ?? "Exercise")
                 .font(.cardTitle)
                 .foregroundStyle(Color.textPrimary)
-            if let muscle = entry.exercise?.muscle {
-                MuscleTag(muscle: muscle)
-            }
             ForEach(Array(entry.orderedSets.enumerated()), id: \.element.id) { index, set in
                 SetRow(
                     number: index + 1,
@@ -71,6 +72,6 @@ struct WorkoutDetailView: View {
             }
             .padding(.top, Spacing.xs)
         }
-        .card()
+        .muscleGlowCard(entry.exercise?.muscle)
     }
 }
