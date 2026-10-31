@@ -55,7 +55,7 @@ struct RootView: View {
                 ExercisesView()
             }
         }
-        // The selected tab's icon and label in the brand teal (mint in dark mode).
+        // The selected tab's icon and label in the brand color: black, or white in dark mode.
         .tint(Color.brand)
         // Scrolling down a long list shrinks the bar out of the way; scrolling up brings it back.
         .tabBarMinimizeBehavior(.onScrollDown)

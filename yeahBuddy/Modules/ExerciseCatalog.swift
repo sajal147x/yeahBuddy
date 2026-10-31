@@ -16,22 +16,33 @@ final class ExerciseCatalog {
     // The main context, so changes are visible to SwiftUI immediately.
     private var context: ModelContext { container.mainContext }
 
-    /// Loads the catalog, adding the built-in exercises on first launch.
+    /// Loads the catalog, adding any built-in exercises the store doesn't have yet.
     ///
     /// - Parameter container: The store to read and write. The catalog keeps it alive.
     init(container: ModelContainer) {
         self.container = container
         all = fetchAll()
-        // An empty store means first launch: an install always has the built-ins after
-        // this, so "empty" never happens again.
-        if all.isEmpty {
-            for builtIn in BuiltInExercises.all {
-                context.insert(Exercise(name: builtIn.name, muscle: builtIn.muscle, summary: builtIn.summary))
-            }
-            save()
-            all = fetchAll()
-        }
+        addMissingBuiltIns()
         fillMissingBuiltInSummaries()
+    }
+
+    /// Adds every built-in the store is missing: all of them on first launch, and on later
+    /// launches any added to `BuiltInExercises` since the install was made.
+    ///
+    /// Matching is by name, ignoring case, so an exercise the user already created under a
+    /// built-in's name stands in for it rather than being duplicated.
+    private func addMissingBuiltIns() {
+        let existing = Set(all.map { $0.name.lowercased() })
+        let missing = BuiltInExercises.all.filter { !existing.contains($0.name.lowercased()) }
+        // Skip the disk write on every normal launch, where nothing is missing.
+        if missing.isEmpty {
+            return
+        }
+        for builtIn in missing {
+            context.insert(Exercise(name: builtIn.name, muscle: builtIn.muscle, summary: builtIn.summary))
+        }
+        save()
+        all = fetchAll()
     }
 
     /// Gives built-in exercises saved by an older version (before descriptions existed)
@@ -88,7 +99,7 @@ final class ExerciseCatalog {
         save()
         // Re-sort in memory rather than fetching again; the list is small.
         all.append(exercise)
-        all.sort { $0.name < $1.name }
+        all.sort { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         return exercise
     }
 
@@ -96,7 +107,9 @@ final class ExerciseCatalog {
     ///
     /// - Returns: All exercises sorted by name, or an empty list if the fetch fails.
     private func fetchAll() -> [Exercise] {
-        let byName = FetchDescriptor<Exercise>(sortBy: [SortDescriptor(\.name)])
+        // The same reader-friendly order as `addCustom` uses: case-insensitive, so
+        // "EZ Bar Curl" sorts before "External Rotation".
+        let byName = FetchDescriptor<Exercise>(sortBy: [SortDescriptor(\.name, comparator: .localizedStandard)])
         return (try? context.fetch(byName)) ?? []
     }
 

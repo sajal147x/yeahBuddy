@@ -1,8 +1,8 @@
 import SwiftUI
 
 // Design tokens. Views use these instead of raw numbers or colors, so the whole look can be
-// tuned from this one file. The look is inspired by Sumeria: calm mint-gray surfaces, white
-// cards, one deep teal brand color, and big left-aligned titles. Every color has a light
+// tuned from this one file. The layout is inspired by Sumeria (big left-aligned titles, cards
+// with large corners), in plain black and white; the only color is muscle groups. Every color has a light
 // and a dark value and follows the user's selected appearance.
 
 /// A saved appearance choice. System leaves SwiftUI free to follow the phone's setting.
@@ -55,24 +55,31 @@ enum Shadow {
 }
 
 extension Color {
-    /// Page background: pale mint-gray in light mode, deep teal-black in dark.
-    static let canvas = Color(light: rgb(0.933, 0.953, 0.949), dark: rgb(0.043, 0.090, 0.086))
+    // The palette is neutral black and white, so the only color on screen is the muscle
+    // colors on exercise cards. Light mode is white cards on soft gray; dark mode is
+    // charcoal cards on true black.
+
+    /// Page background: soft gray in light mode, black in dark.
+    static let canvas = Color(light: rgb(0.949, 0.949, 0.949), dark: rgb(0, 0, 0))
     /// Card surface sitting on the canvas.
-    static let surface = Color(light: .white, dark: rgb(0.090, 0.145, 0.141))
+    static let surface = Color(light: .white, dark: rgb(0.110, 0.110, 0.118))
     /// Controls placed on a card: chips, stepper buttons, search fields.
-    static let surfaceRaised = Color(light: rgb(0.886, 0.925, 0.918), dark: rgb(0.133, 0.200, 0.192))
-    /// The one brand color: deep teal in light mode, mint in dark mode so it stays readable.
-    static let brand = Color(light: rgb(0.055, 0.290, 0.298), dark: rgb(0.498, 0.847, 0.769))
+    static let surfaceRaised = Color(light: rgb(0.918, 0.918, 0.918), dark: rgb(0.173, 0.173, 0.180))
+    /// The primary color: black in light mode, white in dark mode, for the strongest contrast.
+    static let brand = Color(light: rgb(0.067, 0.067, 0.067), dark: rgb(0.961, 0.961, 0.961))
     /// Text and icons drawn on top of `brand`.
-    static let onBrand = Color(light: .white, dark: rgb(0.043, 0.090, 0.086))
-    /// Fill for secondary buttons: a pale wash of the brand color.
-    static let brandSoft = Color(light: rgb(0.788, 0.871, 0.859), dark: rgb(0.118, 0.239, 0.227))
-    /// Main text: numbers and titles. A near-black teal rather than pure black.
-    static let textPrimary = Color(light: rgb(0.063, 0.141, 0.137), dark: rgb(0.918, 0.949, 0.945))
+    static let onBrand = Color(light: .white, dark: .black)
+    /// Fill for secondary buttons: a light gray wash, one step above the card.
+    static let brandSoft = Color(light: rgb(0.906, 0.906, 0.906), dark: rgb(0.173, 0.173, 0.180))
+    /// Main text: numbers and titles. Near-black rather than pure black, to soften it a touch.
+    static let textPrimary = Color(light: rgb(0.067, 0.067, 0.067), dark: rgb(0.961, 0.961, 0.961))
     /// Supporting text: labels, dates, captions.
-    static let textSecondary = Color(light: rgb(0.369, 0.431, 0.424), dark: rgb(0.576, 0.647, 0.635))
+    static let textSecondary = Color(light: rgb(0.431, 0.431, 0.431), dark: rgb(0.596, 0.596, 0.604))
+    /// A see-through panel inside a tinted card (done sets, the Add Set button on a glow
+    /// card), so the card's color shows through instead of clashing with a solid fill.
+    static let inset = Color(light: UIColor(white: 1, alpha: 0.55), dark: UIColor(white: 0, alpha: 0.28))
     /// Thin separators inside cards.
-    static let divider = Color(light: rgb(0.886, 0.914, 0.910), dark: rgb(0.161, 0.224, 0.216))
+    static let divider = Color(light: rgb(0.898, 0.898, 0.898), dark: rgb(0.188, 0.188, 0.196))
 
     /// Creates a color that switches with light and dark mode.
     ///

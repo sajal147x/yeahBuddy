@@ -83,6 +83,23 @@ struct ChipButtonStyle: ButtonStyle {
     }
 }
 
+/// A full-width button on a see-through panel, for actions inside a glow card where the
+/// gray secondary wash would clash with the muscle color.
+struct InsetButtonStyle: ButtonStyle {
+    /// Draws the label on the inset panel that dims while pressed.
+    ///
+    /// - Parameter configuration: The label and pressed state from SwiftUI.
+    /// - Returns: The styled button.
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(.headline, weight: .semibold))
+            .foregroundStyle(Color.textPrimary)
+            .frame(maxWidth: .infinity, minHeight: 50)
+            .background(Color.inset, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+            .opacity(configuration.isPressed ? 0.75 : 1)
+    }
+}
+
 // Shorthands so call sites read `.buttonStyle(.primary)` like the built-in styles.
 extension ButtonStyle where Self == PrimaryButtonStyle {
     /// The primary style.
@@ -93,6 +110,11 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 extension ButtonStyle where Self == SecondaryButtonStyle {
     /// The secondary style.
     static var secondary: SecondaryButtonStyle { SecondaryButtonStyle() }
+}
+
+extension ButtonStyle where Self == InsetButtonStyle {
+    /// The inset style, for buttons inside glow cards.
+    static var inset: InsetButtonStyle { InsetButtonStyle() }
 }
 
 extension ButtonStyle where Self == ChipButtonStyle {

@@ -16,6 +16,8 @@ struct SetRow: View {
     /// Shows a check before the number, marking the set as done. Used in the live workout,
     /// where done sets sit next to the inputs for the next one; History leaves it off.
     var showsCheck = false
+    /// The check's color. Defaults to the brand; glow cards pass their muscle color.
+    var checkColor: Color = .brand
 
     /// Number badge, weight, ×, reps, and the delete button on the far right.
     var body: some View {
@@ -23,7 +25,7 @@ struct SetRow: View {
             if showsCheck {
                 Image(systemName: "checkmark")
                     .font(.footnote.weight(.bold))
-                    .foregroundStyle(Color.brand)
+                    .foregroundStyle(checkColor)
                     .accessibilityHidden(true)
             }
             Text("\(number)")

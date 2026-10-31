@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// Each muscle group keeps its own color, but only as a small accent (dots and labels) so the
-/// overall look stays calm and teal. Kept in the design system so the model stays UI-free.
+/// Each muscle group keeps its own color: a small accent (dots and labels) in most places, and
+/// the glow on live exercise cards (`MuscleGlowCard`). Kept in the design system so the model
+/// stays UI-free.
 extension MuscleGroup {
     /// The accent color for this muscle group's dot.
     var tint: Color {

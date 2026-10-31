@@ -20,13 +20,13 @@ A local-first iPhone workout tracker. SwiftUI + SwiftData, iOS 26.
 
 Inspired by Sumeria (references pulled from Mobbin):
 
-- **Calm surfaces:** pale mint-gray canvas, white cards with large continuous corners and a soft shadow.
-- **One brand color:** deep teal for primary buttons, a pale teal wash for secondary ones.
+- **Calm surfaces:** soft gray canvas with white cards in light mode, true black with charcoal cards in dark; large continuous corners and a soft shadow.
+- **Black and white, no brand color:** primary buttons are black (white in dark mode), secondary ones a light gray wash. The only color in the app is muscle groups.
 - **Big left-aligned screen titles** with a summary line under them, instead of navigation bars on tab roots.
 - **Numbers with small decimals and units**, e.g. "82" big then ".5 kg" small (`Text.amount`).
-- **Muscle colors are small accents only:** a colored dot and label, never a whole card.
+- **Muscle colors are small accents, except on live exercise cards:** elsewhere a colored dot and label. In the workout in progress, each exercise card is lit by a soft glow of its muscle color from the top-left (after Ultrahuman's cycle-tracking card), with the muscle as a small uppercase pill, so exercises are told apart at a glance. These cards always use their dark look, in light mode too, so they read the same in both.
 - **Floating pill tab bar:** Home, History, Exercises. The system iOS 26 tab bar (Liquid Glass), tinted with the brand color.
-- **Light and dark**, following the system. Dark is a deep teal-black with mint as the brand color.
+- **Light and dark**, following the system or the saved appearance setting.
 
 ## Modules
 

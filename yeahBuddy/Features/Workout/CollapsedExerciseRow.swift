@@ -13,31 +13,36 @@ struct CollapsedExerciseRow: View {
     /// Called when the row is tapped, to open this exercise's full card.
     let onExpand: () -> Void
 
-    /// Name and muscle on the left, the set summary and a chevron on the right.
+    /// The muscle pill and chevron on top, the exercise name centered with its summary under
+    /// it, on a card lit by the muscle color: a shorter version of the open card.
     var body: some View {
         Button(action: onExpand) {
-            HStack(spacing: Spacing.md) {
-                VStack(alignment: .leading, spacing: Spacing.xs) {
+            VStack(spacing: Spacing.sm) {
+                HStack {
+                    if let muscle = entry.exercise?.muscle {
+                        MusclePill(muscle: muscle)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.down")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Color.textSecondary)
+                }
+                VStack(spacing: 2) {
                     Text(entry.exercise?.name ?? "Exercise")
                         .font(.cardTitle)
                         .foregroundStyle(Color.textPrimary)
-                    if let muscle = entry.exercise?.muscle {
-                        MuscleTag(muscle: muscle)
-                    }
+                        .multilineTextAlignment(.center)
+                    Text(summary)
+                        .font(.label)
+                        .foregroundStyle(Color.textSecondary)
                 }
-                Spacer()
-                Text(summary)
-                    .font(.label)
-                    .foregroundStyle(Color.textSecondary)
-                Image(systemName: "chevron.down")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(Color.textSecondary)
+                .frame(maxWidth: .infinity)
             }
-            // The whole row is the tap target, not just the text.
+            // The whole card is the tap target, not just the text.
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .card()
+        .muscleGlowCard(entry.exercise?.muscle)
         .accessibilityHint("Double tap to show sets and log more")
     }
 

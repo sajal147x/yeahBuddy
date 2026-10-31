@@ -46,9 +46,10 @@ struct ExerciseCard: View {
         _reps = State(initialValue: Double(last?.reps ?? 8))
     }
 
-    /// Header, one row per logged set, then Add Set.
+    /// Pill and controls, the centered name and set line, the done sets, then Add Set, all
+    /// on a card lit by the exercise's muscle color.
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
+        VStack(spacing: Spacing.md) {
             header
             if !entry.sets.isEmpty {
                 VStack(alignment: .leading, spacing: Spacing.sm) {
@@ -59,30 +60,26 @@ struct ExerciseCard: View {
                             unit: unit.rawValue,
                             reps: set.reps,
                             onDelete: { log.remove(set) },
-                            showsCheck: true
+                            showsCheck: true,
+                            checkColor: entry.exercise?.muscle.tint ?? .brand
                         )
                     }
                 }
-                // A tinted panel so the done sets read as the card's main content and
-                // stand apart from the inputs for the next set below.
+                // A see-through panel so the done sets stand apart while the card's color
+                // still shows through.
                 .padding(.horizontal, Spacing.md)
                 .padding(.vertical, Spacing.sm)
-                .background(Color.brandSoft, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
-            } else if let previous {
-                // Explains where the pre-filled numbers came from. Hidden once today's
-                // sets are listed, since those become the reference instead.
-                Text("Last time: \(unit.format(kilograms: previous.weightKg)) × \(previous.reps)")
-                    .font(.label)
-                    .foregroundStyle(Color.textSecondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.inset, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
             }
             // Opens the pop-up rather than logging straight away, so a stray tap here is
             // harmless: logging always takes the pop-up's own Add Set as well.
             Button("Add Set", systemImage: "plus") {
                 addingSet = true
             }
-            .buttonStyle(.secondary)
+            .buttonStyle(.inset)
         }
-        .card()
+        .muscleGlowCard(entry.exercise?.muscle)
         // The Live Activity's Add Set button, once the workout screen has opened this card.
         .onChange(of: addSetRequest.isPending, initial: true) { _, isPending in
             if isPending && entry === log.currentEntry {
@@ -103,28 +100,36 @@ struct ExerciseCard: View {
         }
     }
 
-    /// The exercise name and muscle tag, with a menu to remove the exercise.
+    /// The muscle pill, collapse chevron and options menu in a row, then the exercise name
+    /// centered with the set line under it. Tapping anywhere but the menu collapses the card.
     private var header: some View {
-        HStack(alignment: .top) {
-            // Name, muscle and an up chevron as one button, mirroring the collapsed row's
-            // down chevron: tap the top of the card to fold it away.
+        ZStack(alignment: .topTrailing) {
             Button(action: onCollapse) {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: Spacing.xs) {
-                        Text(entry.exercise?.name ?? "Exercise")
-                            .font(.cardTitle)
-                            .foregroundStyle(Color.textPrimary)
+                VStack(spacing: Spacing.sm) {
+                    HStack {
                         if let muscle = entry.exercise?.muscle {
-                            MuscleTag(muscle: muscle)
+                            MusclePill(muscle: muscle)
                         }
+                        Spacer()
+                        Image(systemName: "chevron.up")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Color.textSecondary)
+                            // Clear of the options menu, which sits over this corner.
+                            .padding(.trailing, 44)
                     }
-                    Spacer()
-                    Image(systemName: "chevron.up")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(Color.textSecondary)
-                        .frame(height: 36)
+                    .frame(height: 36)
+                    VStack(spacing: Spacing.xs) {
+                        Text(entry.exercise?.name ?? "Exercise")
+                            .font(.title2.weight(.bold))
+                            .foregroundStyle(Color.textPrimary)
+                            .multilineTextAlignment(.center)
+                        Text(setLine)
+                            .font(.label)
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                    .frame(maxWidth: .infinity)
                 }
-                // The empty space beside the name is tappable too.
+                // The empty space around the name is tappable too.
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -138,10 +143,23 @@ struct ExerciseCard: View {
                     .font(.headline)
                     .foregroundStyle(Color.textPrimary)
                     .frame(width: 36, height: 36)
-                    .background(Color.surfaceRaised, in: Circle())
+                    .background(Color.inset, in: Circle())
             }
             .accessibilityLabel("Exercise options")
         }
+    }
+
+    /// The line under the name: the next set's number and the set to beat, e.g.
+    /// "Set 3 · last 135 lb × 8". Before any set today it shows last session's final set.
+    private var setLine: String {
+        let next = "Set \(entry.sets.count + 1)"
+        if let last = entry.orderedSets.last {
+            return "\(next) · last \(unit.format(kilograms: last.weightKg)) × \(last.reps)"
+        }
+        if let previous {
+            return "\(next) · last time \(unit.format(kilograms: previous.weightKg)) × \(previous.reps)"
+        }
+        return next
     }
 
     /// Logs the pop-up's values as a new set and starts the rest timer.
