@@ -166,6 +166,8 @@ struct WorkoutLogTests {
         log.finish()
         clock.advance(by: 86_400)
         log.logSet(weightKg: 100, reps: 5, of: bench)
+        // Sets are ordered by time, so give the final one a later time.
+        clock.advance(by: 120)
         log.logSet(weightKg: 90, reps: 8, of: bench)
         log.finish()
 
@@ -208,6 +210,49 @@ struct WorkoutLogTests {
         log.logSet(weightKg: 100, reps: 5, of: bench)
 
         #expect(log.lastSet(of: bench)?.weightKg == 80)
+    }
+
+    /// Before any set is logged, the exercise you're on is the one you added last.
+    @Test func currentEntryIsTheNewestExerciseBeforeAnySets() {
+        let log = makeLog()
+        #expect(log.currentEntry == nil)
+
+        log.add(Exercise(name: "Bench Press", muscle: .chest))
+        let fly = log.add(Exercise(name: "Chest Fly", muscle: .chest))
+
+        #expect(log.currentEntry === fly)
+    }
+
+    /// Going back to an earlier exercise and logging a set makes it the current one.
+    @Test func currentEntryFollowsTheMostRecentSet() {
+        let log = makeLog()
+        let bench = Exercise(name: "Bench Press", muscle: .chest)
+        log.logSet(weightKg: 60, reps: 8, of: bench)
+        clock.advance(by: 90)
+        log.add(Exercise(name: "Chest Fly", muscle: .chest))
+        clock.advance(by: 90)
+
+        log.logSet(weightKg: 60, reps: 8, of: bench)
+
+        #expect(log.currentEntry?.exercise?.name == "Bench Press")
+    }
+
+    /// After a relaunch, the exercise with the latest set is current; removing it falls back.
+    @Test func currentEntryAfterRelaunchIsTheOneWithTheLatestSet() {
+        let before = makeLog()
+        let bench = Exercise(name: "Bench Press", muscle: .chest)
+        let fly = Exercise(name: "Chest Fly", muscle: .chest)
+        before.logSet(weightKg: 60, reps: 8, of: fly)
+        clock.advance(by: 90)
+        before.logSet(weightKg: 60, reps: 8, of: bench)
+        clock.advance(by: 90)
+        before.add(Exercise(name: "Dip", muscle: .chest))
+
+        let after = makeLog()
+        #expect(after.currentEntry?.exercise?.name == "Bench Press")
+
+        after.remove(try! #require(after.currentEntry))
+        #expect(after.currentEntry?.exercise?.name == "Chest Fly")
     }
 
     /// This Week counts only finished workouts started since the start of the current week

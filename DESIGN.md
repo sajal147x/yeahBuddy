@@ -35,6 +35,7 @@ Inspired by Sumeria (references pulled from Mobbin):
 | `WorkoutLog` | `active`, `history`, `start()`, `add(_:)`, `logSet(weightKg:reps:of:)`, `remove(_:)`, `finish()`, `delete(_:)`, `thisWeek()` | SwiftData, ordering, persistence, starting workouts implicitly, week boundaries |
 | `ExerciseCatalog` | `all`, `search(_:)`, `addCustom(name:muscle:summary:)` | Built-in seeding and description backfill, duplicate handling |
 | `RestTimer` | `remaining`, `isRunning`, `start(seconds:)`, `extend(by:)`, `skip()` | End-time math that survives backgrounding |
+| `WorkoutActivity` | `sync()`, `content(log:rest:unit:)` | ActivityKit: starting, updating and ending the Lock Screen / Dynamic Island activity |
 | `WeightUnit` | `kilograms(from:)`, `value(fromKilograms:)`, `format(kilograms:)`, `step` | Storage is always kg |
 
 Views never touch SwiftData directly; they go through these modules, injected with `.environment`.
@@ -53,6 +54,6 @@ scripts/test.sh   Runs tests on the simulator: scripts/test.sh [SuiteName]
 
 ## Scope
 
-**v1:** live logging (exercises, weight × reps, rest timer), history tiles and detail, built-in + custom exercises, kg/lb.
+**v1:** live logging (exercises, weight × reps, rest timer), history tiles and detail, built-in + custom exercises, kg/lb, a silent workout Live Activity (exercise and set, workout clock, rest countdown, +15s / Skip / Add Set).
 
-**Later:** voice logging (SpeechAnalyzer + Foundation Models tool calling, on-device, behind a `WorkoutParser` protocol), routines/templates, progress charts, Apple Health, Live Activity, cardio.
+**Later:** voice logging (SpeechAnalyzer + Foundation Models tool calling, on-device, behind a `WorkoutParser` protocol), routines/templates, progress charts, Apple Health, cardio.

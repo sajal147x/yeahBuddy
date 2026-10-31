@@ -23,6 +23,9 @@ final class WorkoutLog {
     private var context: ModelContext { container.mainContext }
     // Injected so tests can control time; the app uses the real clock.
     private let now: () -> Date
+    // The exercise most recently added or logged to, behind `currentEntry`. In memory only:
+    // which one you're on doesn't need to survive a relaunch.
+    private var lastTouched: ExerciseEntry?
     // Decides where a week starts (Sunday or Monday depends on the user's region).
     // Injected so tests don't depend on the machine's locale.
     private let calendar: Calendar
@@ -70,6 +73,8 @@ final class WorkoutLog {
     func add(_ exercise: Exercise) -> ExerciseEntry {
         let workout = start()
         if let existing = workout.entries.first(where: { $0.exercise == exercise }) {
+            // `logSet` comes through here too, so this also marks the exercise being logged.
+            lastTouched = existing
             return existing
         }
         // New exercises go to the end. Positions can have gaps after a removal, which is
@@ -77,6 +82,7 @@ final class WorkoutLog {
         let entry = ExerciseEntry(exercise: exercise, position: workout.entries.count)
         workout.entries.append(entry)
         save()
+        lastTouched = entry
         return entry
     }
 
@@ -163,6 +169,35 @@ final class WorkoutLog {
             sets: workouts.reduce(0) { $0 + $1.setCount },
             volumeKg: workouts.reduce(0) { $0 + $1.totalVolumeKg }
         )
+    }
+
+    /// The exercise you're working on in the workout in progress, for places outside the
+    /// workout screen (the Live Activity) that need to name it.
+    ///
+    /// The workout screen tracks which card is open as UI state; this is the logic version.
+    ///
+    /// It's the exercise last added or logged to. After a relaunch (which forgets that), it's
+    /// the exercise with the most recent set, or the newest one if nothing is logged yet.
+    var currentEntry: ExerciseEntry? {
+        guard let workout = active else {
+            return nil
+        }
+        if let lastTouched, workout.entries.contains(where: { $0 === lastTouched }) {
+            return lastTouched
+        }
+        let withSets = workout.entries.filter { !$0.sets.isEmpty }
+        if let latest = withSets.max(by: { latestSetTime(of: $0) < latestSetTime(of: $1) }) {
+            return latest
+        }
+        return workout.orderedEntries.last
+    }
+
+    /// When an entry's most recent set was done.
+    ///
+    /// - Parameter entry: An entry with at least one set.
+    /// - Returns: The latest completion time, or the distant past if it has no sets.
+    private func latestSetTime(of entry: ExerciseEntry) -> Date {
+        entry.orderedSets.last?.completedAt ?? .distantPast
     }
 
     /// The set you finished on the last time you did an exercise, so a new card can start

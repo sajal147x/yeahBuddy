@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import yeahBuddy
 
@@ -70,6 +71,20 @@ struct RestTimerTests {
 
         timer.skip()
         #expect(timer.total == 0)
+    }
+
+    /// The end time is exposed so the Live Activity can count down on its own; it's nil when
+    /// no rest is running, including after the rest runs out.
+    @Test func endsAtIsTheEndOfARunningRestOnly() {
+        let timer = makeTimer()
+        #expect(timer.endsAt == nil)
+
+        timer.start(seconds: 90)
+        timer.extend(by: 15)
+        #expect(timer.endsAt == clock.now.addingTimeInterval(105))
+
+        clock.advance(by: 200)
+        #expect(timer.endsAt == nil)
     }
 
     /// Skip ends the rest right away.

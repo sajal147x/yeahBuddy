@@ -5,12 +5,12 @@ import Observation
 /// correct while the app is in the background. Views redraw on their own schedule and read
 /// `remaining`.
 ///
-/// The timer lives in memory only, so it resets if the app is killed. That is acceptable
-/// for v1; a Live Activity later would need it persisted.
+/// The timer lives in memory only, so it resets if the app is killed. The Live Activity is
+/// ended on the next launch in that case (see `WorkoutActivity.sync()`).
 @Observable
 final class RestTimer {
     // When the current rest ends; nil when no rest is running.
-    private var endsAt: Date?
+    private var end: Date?
     /// The full length of the current rest in seconds, including every extension; 0 when
     /// no rest has started. Stays put after the countdown hits zero, until the next start.
     private(set) var total: TimeInterval = 0
@@ -26,10 +26,19 @@ final class RestTimer {
 
     /// Seconds left; 0 when not running. Never negative, even long after the rest ended.
     var remaining: TimeInterval {
-        guard let endsAt else {
+        guard let end else {
             return 0
         }
-        return max(0, endsAt.timeIntervalSince(now()))
+        return max(0, end.timeIntervalSince(now()))
+    }
+
+    /// When the running rest ends; nil when none is running, including once it has run out.
+    /// The Live Activity counts down to this by itself, so the app needn't wake every second.
+    var endsAt: Date? {
+        if isRunning {
+            return end
+        }
+        return nil
     }
 
     /// Whether a rest is counting down right now.
@@ -41,7 +50,7 @@ final class RestTimer {
     ///
     /// - Parameter seconds: How long to rest.
     func start(seconds: TimeInterval) {
-        endsAt = now().addingTimeInterval(seconds)
+        end = now().addingTimeInterval(seconds)
         total = seconds
     }
 
@@ -51,7 +60,7 @@ final class RestTimer {
     func extend(by seconds: TimeInterval) {
         if isRunning {
             // Push the end time out and grow the total, so it reads e.g. 1:45 after one +15s.
-            endsAt = now().addingTimeInterval(remaining + seconds)
+            end = now().addingTimeInterval(remaining + seconds)
             total += seconds
         } else {
             // The last rest already ran out: this is a new, short rest of its own.
@@ -61,7 +70,7 @@ final class RestTimer {
 
     /// Ends the rest immediately, e.g. when the user is ready for the next set.
     func skip() {
-        endsAt = nil
+        end = nil
         total = 0
     }
 }

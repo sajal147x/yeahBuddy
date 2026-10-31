@@ -5,6 +5,7 @@ struct ActiveWorkoutView: View {
     @Environment(WorkoutLog.self) private var log
     @Environment(RestTimer.self) private var restTimer
     @Environment(\.dismiss) private var dismiss
+    @Environment(AddSetRequest.self) private var addSetRequest
     // Shared with Home's settings menu through the same key.
     @AppStorage("weightUnit") private var unit: WeightUnit = .kilograms
     // Whether the exercise picker sheet is showing.
@@ -56,6 +57,17 @@ struct ActiveWorkoutView: View {
                 }
             } message: {
                 Text("All sets logged in it will be deleted.")
+            }
+            // The Live Activity's Add Set button: open the exercise being worked on, whose
+            // card then shows the pop-up. With no exercise yet, there's nothing to add to.
+            .onChange(of: addSetRequest.isPending, initial: true) { _, isPending in
+                if isPending {
+                    if let current = log.currentEntry {
+                        open = .entry(current)
+                    } else {
+                        addSetRequest.isPending = false
+                    }
+                }
             }
             // Finishing or discarding clears `active`; that is the signal to close.
             .onChange(of: log.active == nil) { _, ended in

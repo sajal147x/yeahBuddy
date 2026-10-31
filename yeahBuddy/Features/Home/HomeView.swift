@@ -10,6 +10,7 @@ struct HomeView: View {
     @AppStorage("appearance") private var appearance: AppAppearance = .system
     // Whether the full-screen active workout is showing.
     @State private var showingWorkout = false
+    @Environment(AddSetRequest.self) private var addSetRequest
 
     /// Header, current workout, This Week, then Last Workout.
     var body: some View {
@@ -47,6 +48,12 @@ struct HomeView: View {
             }
             .fullScreenCover(isPresented: $showingWorkout) {
                 ActiveWorkoutView()
+            }
+            // The Live Activity's Add Set button: open the workout, which takes it from there.
+            .onChange(of: addSetRequest.isPending, initial: true) { _, isPending in
+                if isPending {
+                    openWorkoutForAddSet()
+                }
             }
         }
     }
@@ -98,5 +105,15 @@ struct HomeView: View {
             Stat(StatValue(number: unit.formatNumber(kilograms: week.volumeKg), unit: unit.rawValue, label: "Volume"))
         }
         .card()
+    }
+
+    /// Opens the workout screen for the Live Activity's Add Set button. With no workout in
+    /// progress (the activity was out of date) there's nothing to add to, so drop the request.
+    private func openWorkoutForAddSet() {
+        if log.active != nil {
+            showingWorkout = true
+        } else {
+            addSetRequest.isPending = false
+        }
     }
 }

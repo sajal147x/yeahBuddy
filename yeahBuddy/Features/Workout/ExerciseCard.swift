@@ -14,6 +14,7 @@ struct ExerciseCard: View {
 
     @Environment(WorkoutLog.self) private var log
     @Environment(RestTimer.self) private var restTimer
+    @Environment(AddSetRequest.self) private var addSetRequest
     // The values for the next set, in `unit`, edited in the Add Set pop-up. Kept here so they
     // survive between pop-ups. Converted to kg only when logging.
     @State private var weight: Double
@@ -82,6 +83,13 @@ struct ExerciseCard: View {
             .buttonStyle(.secondary)
         }
         .card()
+        // The Live Activity's Add Set button, once the workout screen has opened this card.
+        .onChange(of: addSetRequest.isPending, initial: true) { _, isPending in
+            if isPending && entry === log.currentEntry {
+                addSetRequest.isPending = false
+                addingSet = true
+            }
+        }
         .sheet(isPresented: $addingSet) {
             AddSetSheet(
                 exerciseName: entry.exercise?.name ?? "Exercise",

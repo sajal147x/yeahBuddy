@@ -24,6 +24,8 @@ yeahBuddy/
   Modules/        WorkoutLog, ExerciseCatalog, RestTimer (the logic; fully tested)
   DesignSystem/   Theme tokens, Styles, Components/
   Features/       Root (tab bar), Home, History, Exercises, Workout, Shared
+  Shared/         Compiled into the app and the widget extension (Live Activity attributes, intents)
+yeahBuddyWidgets/ Widget extension: the workout Live Activity UI only
 yeahBuddyTests/   One Swift Testing suite per module, in-memory store + TestClock
 scripts/          test.sh, testflight.sh, make_icon.swift
 ```
@@ -47,7 +49,9 @@ swift scripts/make_icon.swift yeahBuddy/Assets.xcassets/AppIcon.appiconset/AppIc
 - **Never build into the Desktop folder** (e.g. `-derivedDataPath build`). Files there get extended attributes that make code signing fail. Use the default DerivedData or a temp folder.
 - **Simulator screenshots lag behind taps.** If a tap seems ignored, take another screenshot before tapping again, or you'll double-tap.
 - **Exercise names are the key** linking stored built-ins to `BuiltInExercises`; renaming one there won't update existing installs.
-- **The rest timer is in memory only** and resets if the app is killed.
+- **The rest timer is in memory only** and resets if the app is killed; the Live Activity is ended on the next launch.
+- **Files the widget extension needs** (`Shared/*`, `DesignSystem/Theme.swift`) are added to its target through the `yeahBuddy` folder's membership exceptions in the project file. A new shared file must be added there too.
+- **Live Activity buttons run in the app's process** through `LiveActivityActions` closures set in `yeahBuddyApp.init`; the widget target never imports app modules.
 
 ## Releasing to TestFlight
 
