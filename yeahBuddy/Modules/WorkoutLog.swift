@@ -56,12 +56,16 @@ final class WorkoutLog {
     ///   - weightKg: The weight lifted, always in kilograms. Use `WeightUnit` to convert input.
     ///   - reps: How many repetitions were done.
     ///   - exercise: The exercise the set belongs to.
-    func logSet(weightKg: Double, reps: Int, of exercise: Exercise) {
+    /// - Returns: The new set, for callers that may need to undo it (voice logging).
+    @discardableResult
+    func logSet(weightKg: Double, reps: Int, of exercise: Exercise) -> SetEntry {
         // `add` either finds this exercise's entry or creates it, so sets of the same
         // exercise always group together.
         let entry = add(exercise)
-        entry.sets.append(SetEntry(weightKg: weightKg, reps: reps, completedAt: now()))
+        let set = SetEntry(weightKg: weightKg, reps: reps, completedAt: now())
+        entry.sets.append(set)
         save()
+        return set
     }
 
     /// Adds an exercise to the workout in progress, starting one if none is running.
@@ -109,6 +113,19 @@ final class WorkoutLog {
         // only drop it from the relationship on the next save.
         set.entry?.sets.removeAll { $0 == set }
         context.delete(set)
+        save()
+    }
+
+    /// Corrects a logged set, e.g. "make that 6 reps". Its time, and so its place in the
+    /// exercise's order, stays the same.
+    ///
+    /// - Parameters:
+    ///   - set: The set to change.
+    ///   - weightKg: The corrected weight, always in kilograms.
+    ///   - reps: The corrected repetitions.
+    func update(_ set: SetEntry, weightKg: Double, reps: Int) {
+        set.weightKg = weightKg
+        set.reps = reps
         save()
     }
 

@@ -3,6 +3,7 @@ import SwiftUI
 /// The full-screen workout in progress. Closes itself once the workout is finished or discarded.
 struct ActiveWorkoutView: View {
     @Environment(WorkoutLog.self) private var log
+    @Environment(ExerciseCatalog.self) private var catalog
     @Environment(RestTimer.self) private var restTimer
     @Environment(\.dismiss) private var dismiss
     @Environment(AddSetRequest.self) private var addSetRequest
@@ -15,6 +16,8 @@ struct ActiveWorkoutView: View {
     // Which exercise shows as a full card; the rest are collapsed rows. A freshly opened
     // screen shows the newest.
     @State private var open: OpenExercise = .newest
+    // The voice action in progress, if any, and its result banner.
+    @State private var voice = VoiceController()
 
     /// The choices for which exercise card is open. At most one is open at a time.
     private enum OpenExercise {
@@ -40,6 +43,17 @@ struct ActiveWorkoutView: View {
             .scrollDismissesKeyboard(.immediately)
             // The steppers' number pads have no return key; this gives them one Done button.
             .keyboardDoneButton()
+            // The mic sits where the thumb rests. Hidden where the on-device model can't run
+            // (older iPhones, Apple Intelligence off), since voice can't work there.
+            .safeAreaInset(edge: .bottom) {
+                if VoiceController.isAvailable {
+                    VoiceBar(controller: voice, onListen: listen, onUndo: {
+                        voice.undo(using: VoiceLogger(log: log, catalog: catalog))
+                        // Rest was started for the sets that are now gone.
+                        restTimer.skip()
+                    })
+                }
+            }
             .navigationTitle(log.active?.title ?? "Workout")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbar }
@@ -141,6 +155,18 @@ struct ActiveWorkoutView: View {
             return workout.orderedEntries.last
         case .none:
             return nil
+        }
+    }
+
+    /// Starts a voice action: listen, parse, log, and start rest like a tapped set would.
+    private func listen() {
+        let context = ParseContext(
+            currentExercise: log.currentEntry?.exercise?.name,
+            unit: unit,
+            exerciseNames: catalog.all.map(\.name)
+        )
+        voice.start(logger: VoiceLogger(log: log, catalog: catalog), context: context, unit: unit) {
+            restTimer.start(seconds: ExerciseCard.restSeconds)
         }
     }
 

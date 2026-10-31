@@ -387,6 +387,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "yeahBuddy listens while you tap the mic so you can log sets by voice. Audio stays on your iPhone.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Your words are turned into sets on your iPhone. Nothing is sent anywhere.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -419,6 +421,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "yeahBuddy listens while you tap the mic so you can log sets by voice. Audio stays on your iPhone.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Your words are turned into sets on your iPhone. Nothing is sent anywhere.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

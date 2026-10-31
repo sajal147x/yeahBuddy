@@ -22,8 +22,9 @@ struct ExerciseCard: View {
     // Whether the Add Set pop-up is showing.
     @State private var addingSet = false
 
-    // How long the rest timer runs after each set. A common default for hypertrophy work.
-    private static let restSeconds: TimeInterval = 90
+    /// How long the rest timer runs after each set, tapped or spoken. A common default for
+    /// hypertrophy work.
+    static let restSeconds: TimeInterval = 90
 
     /// Creates a card, pre-filling the next set so repeating the last one needs no changes.
     ///

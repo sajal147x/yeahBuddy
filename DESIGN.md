@@ -36,6 +36,8 @@ Inspired by Sumeria (references pulled from Mobbin):
 | `ExerciseCatalog` | `all`, `search(_:)`, `addCustom(name:muscle:summary:)` | Built-in seeding and description backfill, duplicate handling |
 | `RestTimer` | `remaining`, `isRunning`, `start(seconds:)`, `extend(by:)`, `skip()` | End-time math that survives backgrounding |
 | `WorkoutActivity` | `sync()`, `content(log:rest:unit:)` | ActivityKit: starting, updating and ending the Lock Screen / Dynamic Island activity |
+| `VoiceLogger` | `apply(_:unit:)`, `undo(_:)` | Turning parsed voice commands into sets: which exercise a name means, what "same again" repeats, all-or-nothing batches, exact undo |
+| `WorkoutParser` | `parse(_:context:)` | Sentence → `VoiceCommand`s. `FoundationModelsParser` uses on-device tool calling; its tools only record commands, never change data |
 | `WeightUnit` | `kilograms(from:)`, `value(fromKilograms:)`, `format(kilograms:)`, `step` | Storage is always kg |
 
 Views never touch SwiftData directly; they go through these modules, injected with `.environment`.
@@ -45,7 +47,7 @@ Views never touch SwiftData directly; they go through these modules, injected wi
 ```
 yeahBuddy/
   Model/          SwiftData models, WeightUnit, built-in exercises
-  Modules/        WorkoutLog, ExerciseCatalog, RestTimer
+  Modules/        WorkoutLog, ExerciseCatalog, RestTimer, WorkoutActivity, VoiceLogger, WorkoutParser
   DesignSystem/   Theme tokens, Styles, Components/
   Features/       Root (tabs), Home, Workout, Exercises, History, Shared
 yeahBuddyTests/   Swift Testing suites, one per module
@@ -54,6 +56,6 @@ scripts/test.sh   Runs tests on the simulator: scripts/test.sh [SuiteName]
 
 ## Scope
 
-**v1:** live logging (exercises, weight × reps, rest timer), history tiles and detail, built-in + custom exercises, kg/lb, a silent workout Live Activity (exercise and set, workout clock, rest countdown, +15s / Skip / Add Set).
+**v1:** live logging (exercises, weight × reps, rest timer), history tiles and detail, built-in + custom exercises, kg/lb, a silent workout Live Activity (exercise and set, workout clock, rest countdown, +15s / Skip / Add Set), voice logging on the workout screen (tap the mic, speak, it stops when you pause; on-device SpeechAnalyzer + Foundation Models tool calling; logs at once with Undo; add exercise, log sets, same again, correct the last set; hidden where Apple Intelligence isn't available).
 
-**Later:** voice logging (SpeechAnalyzer + Foundation Models tool calling, on-device, behind a `WorkoutParser` protocol), routines/templates, progress charts, Apple Health, cardio.
+**Later:** voice rest-timer commands, routines/templates, progress charts, Apple Health, cardio.

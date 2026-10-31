@@ -21,7 +21,7 @@ Read [DESIGN.md](DESIGN.md) before changing anything. It holds the principles, t
 ```
 yeahBuddy/
   Model/          SwiftData models, WeightUnit, WeekSummary, built-in exercises
-  Modules/        WorkoutLog, ExerciseCatalog, RestTimer (the logic; fully tested)
+  Modules/        WorkoutLog, ExerciseCatalog, RestTimer, WorkoutActivity, VoiceLogger, WorkoutParser (the logic)
   DesignSystem/   Theme tokens, Styles, Components/
   Features/       Root (tab bar), Home, History, Exercises, Workout, Shared
   Shared/         Compiled into the app and the widget extension (Live Activity attributes, intents)
@@ -51,6 +51,7 @@ swift scripts/make_icon.swift yeahBuddy/Assets.xcassets/AppIcon.appiconset/AppIc
 - **Exercise names are the key** linking stored built-ins to `BuiltInExercises`; renaming one there won't update existing installs.
 - **The rest timer is in memory only** and resets if the app is killed; the Live Activity is ended on the next launch.
 - **Files the widget extension needs** (`Shared/*`, `DesignSystem/Theme.swift`) are added to its target through the `yeahBuddy` folder's membership exceptions in the project file. A new shared file must be added there too.
+- **Voice logging needs Apple Intelligence** (iPhone 15 Pro or newer, or a Mac with it on for the simulator); the mic hides itself otherwise. The simulator can't hear you, so check speech on a phone. `VoiceLogger` is the tested part; the parser and listener are checked by hand.
 - **Live Activity buttons run in the app's process** through `LiveActivityActions` closures set in `yeahBuddyApp.init`; the widget target never imports app modules.
 
 ## Releasing to TestFlight
