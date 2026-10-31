@@ -63,7 +63,7 @@ final class VoiceController {
                     return
                 }
                 phase = .thinking
-                let commands = try await parser.parse(sentence, context: context)
+                let commands = try await Self.parse(sentence, with: parser, context: context)
                 switch logger.apply(commands, unit: unit) {
                 case .applied(let summary, let change):
                     phase = .done(summary: summary, change: change)
@@ -73,6 +73,8 @@ final class VoiceController {
                 case .failed(let message):
                     phase = .failed(message)
                 }
+            } catch is TimedOut {
+                phase = .failed("That took too long. Try again")
             } catch SpeechListener.Failure.microphoneDenied {
                 phase = .failed("Allow the microphone in Settings to log by voice")
             } catch SpeechListener.Failure.unsupportedLanguage {
@@ -80,6 +82,40 @@ final class VoiceController {
             } catch {
                 phase = .failed("Couldn't understand that. Try again")
             }
+        }
+    }
+
+    // The longest "Thinking…" may last. A normal parse takes a second or two; past this,
+    // something is stuck and the user is better off trying again.
+    private static let parseTimeout: Duration = .seconds(20)
+
+    /// Thrown when the parser runs past `parseTimeout`.
+    private struct TimedOut: Error {}
+
+    /// Runs the parser, giving up after `parseTimeout` so the screen can never sit on
+    /// "Thinking…" indefinitely.
+    ///
+    /// - Parameters:
+    ///   - sentence: What was said.
+    ///   - parser: The parser.
+    ///   - context: The parse context.
+    /// - Returns: The parsed commands.
+    /// - Throws: `TimedOut` past the limit, or whatever the parser throws.
+    private static func parse(_ sentence: String, with parser: any WorkoutParser, context: ParseContext) async throws -> [VoiceCommand] {
+        try await withThrowingTaskGroup(of: [VoiceCommand].self) { group in
+            group.addTask {
+                try await parser.parse(sentence, context: context)
+            }
+            group.addTask {
+                try await Task.sleep(for: parseTimeout)
+                throw TimedOut()
+            }
+            // Whichever finishes first wins; the other is cancelled.
+            guard let first = try await group.next() else {
+                throw TimedOut()
+            }
+            group.cancelAll()
+            return first
         }
     }
 

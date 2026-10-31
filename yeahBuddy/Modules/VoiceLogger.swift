@@ -177,22 +177,18 @@ final class VoiceLogger {
 
     // MARK: - Lookups
 
-    /// The exercise a spoken name means: an exact match ignoring case, otherwise the only
-    /// exercise whose name contains it. Nil when there's none or it's ambiguous, so a vague
-    /// name never logs to the wrong exercise.
+    /// The exercise a spoken name means: an exact match ignoring case, otherwise the
+    /// shortest name containing it. Shortest is the plainest variant, so "bench" is Bench
+    /// Press rather than Incline Bench Press (Barbell); people name the variant when they mean it.
     ///
     /// - Parameter name: The name as parsed.
-    /// - Returns: The exercise, or nil.
+    /// - Returns: The exercise, or nil when no name contains it.
     private func find(_ name: String) -> Exercise? {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         if let exact = catalog.all.first(where: { $0.name.caseInsensitiveCompare(trimmed) == .orderedSame }) {
             return exact
         }
-        let matches = catalog.search(trimmed)
-        if matches.count == 1 {
-            return matches[0]
-        }
-        return nil
+        return catalog.search(trimmed).min { $0.name.count < $1.name.count }
     }
 
     /// The weight to use when none was said: this exercise's last set in this workout,

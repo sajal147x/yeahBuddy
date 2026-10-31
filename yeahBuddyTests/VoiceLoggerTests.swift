@@ -74,6 +74,17 @@ struct VoiceLoggerTests {
         #expect(loggedSets == ["Pendlay Row 60.0×5"])
     }
 
+    /// A short name matching several exercises means the plainest one: "bench" is Bench
+    /// Press, not Incline Bench Press (Barbell).
+    @Test func aNameWithSeveralMatchesPicksTheShortest() {
+        applied([
+            .logSets(exercise: "bench", weight: 100, unit: nil, reps: 8, count: 1),
+            .addExercise(name: "pulldown"),
+        ])
+
+        #expect(log.active?.orderedEntries.map(\.exercise?.name) == ["Bench Press", "Lat Pulldown"])
+    }
+
     /// No exercise named means the one you're on, and no weight means its last weight.
     @Test func bareRepsGoToTheCurrentExerciseAtItsLastWeight() {
         log.logSet(weightKg: 80, reps: 8, of: exercise("Squat"))
