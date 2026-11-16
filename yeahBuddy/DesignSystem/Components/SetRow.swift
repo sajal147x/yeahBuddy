@@ -18,6 +18,8 @@ struct SetRow: View {
     var showsCheck = false
     /// The check's color. Defaults to the brand; glow cards pass their muscle color.
     var checkColor: Color = .brand
+    /// Draws the row faded, for a set not done yet: last session's set laid out to repeat.
+    var isPending = false
 
     /// Number badge, weight, ×, reps, and the delete button on the far right.
     var body: some View {
@@ -34,11 +36,11 @@ struct SetRow: View {
                 .frame(width: 24, height: 24)
                 .background(Color.surfaceRaised, in: Circle())
             Text.amount(weight, unit: unit, size: 19)
-                .foregroundStyle(Color.textPrimary)
+                .foregroundStyle(valueColor)
             Text("×")
                 .foregroundStyle(Color.textSecondary)
             Text.amount("\(reps)", size: 19)
-                .foregroundStyle(Color.textPrimary)
+                .foregroundStyle(valueColor)
             Spacer()
             if let onDelete {
                 // Icon only to keep the row compact; the title stays for VoiceOver.
@@ -51,6 +53,16 @@ struct SetRow: View {
                     .buttonStyle(.plain)
             }
         }
+        // Faded as a whole, so a pending row reads as a suggestion beside the done ones.
+        .opacity(isPending ? 0.5 : 1)
+    }
+
+    /// Weight and reps: muted while pending, full strength once done.
+    private var valueColor: Color {
+        if isPending {
+            return Color.textSecondary
+        }
+        return Color.textPrimary
     }
 }
 
@@ -58,6 +70,7 @@ struct SetRow: View {
     VStack(alignment: .leading, spacing: Spacing.sm) {
         SetRow(number: 1, weight: "80", unit: "kg", reps: 8, onDelete: {}, showsCheck: true)
         SetRow(number: 2, weight: "82.5", unit: "kg", reps: 6)
+        SetRow(number: 3, weight: "82.5", unit: "kg", reps: 6, isPending: true)
     }
     .card()
     .padding()

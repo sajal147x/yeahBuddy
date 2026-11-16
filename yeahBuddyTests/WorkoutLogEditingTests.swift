@@ -33,4 +33,34 @@ struct WorkoutLogEditingTests {
         #expect(sets.map(\.weightKg) == [82.5, 80])
         #expect(sets.map(\.reps) == [6, 8])
     }
+
+    /// Last time's whole session for an exercise, in order, so a new card can lay it out to
+    /// repeat. Skips a later workout where the exercise was added but nothing logged, and
+    /// ignores the workout in progress.
+    @Test func lastSetsAreTheWholeLastSessionInOrder() {
+        let log = makeLog()
+        let bench = Exercise(name: "Bench Press", muscle: .chest)
+        // An older session, then the one that should win.
+        log.logSet(weightKg: 60, reps: 10, of: bench)
+        log.finish()
+        clock.advance(by: 3600)
+        log.logSet(weightKg: 80, reps: 8, of: bench)
+        clock.advance(by: 120)
+        log.logSet(weightKg: 82.5, reps: 6, of: bench)
+        log.finish()
+        // A later session where bench was added but skipped.
+        clock.advance(by: 3600)
+        log.add(bench)
+        log.logSet(weightKg: 100, reps: 5, of: Exercise(name: "Squat", muscle: .legs))
+        log.finish()
+        // Today's workout, in progress, with one set already.
+        clock.advance(by: 3600)
+        log.logSet(weightKg: 90, reps: 3, of: bench)
+
+        let last = log.lastSets(of: bench)
+
+        #expect(last.map(\.weightKg) == [80, 82.5])
+        #expect(last.map(\.reps) == [8, 6])
+        #expect(log.lastSets(of: Exercise(name: "Deadlift", muscle: .back)).isEmpty)
+    }
 }

@@ -217,25 +217,33 @@ final class WorkoutLog {
         entry.orderedSets.last?.completedAt ?? .distantPast
     }
 
-    /// The set you finished on the last time you did an exercise, so a new card can start
-    /// from that weight and reps instead of the empty bar.
+    /// Every set from the last time you did an exercise, in order, so a new card can lay
+    /// out that session to repeat or beat.
     ///
     /// Only finished workouts count: the one in progress already shows its own sets, and
     /// pre-filling from it would just echo them back. A workout where the exercise was added
     /// but no sets were logged is skipped, so it doesn't hide the session before it.
     ///
     /// - Parameter exercise: The exercise to look up.
-    /// - Returns: The final set from the newest finished workout with sets of `exercise`,
-    ///   or nil if it has never been done.
-    func lastSet(of exercise: Exercise) -> SetEntry? {
-        // History is newest first, so the first workout with a matching set wins.
+    /// - Returns: The sets from the newest finished workout with sets of `exercise`, in the
+    ///   order they were done; empty if it has never been done.
+    func lastSets(of exercise: Exercise) -> [SetEntry] {
+        // History is newest first, so the first workout with matching sets wins.
         for workout in history {
             let entry = workout.entries.first { $0.exercise == exercise }
-            if let last = entry?.orderedSets.last {
-                return last
+            if let sets = entry?.orderedSets, !sets.isEmpty {
+                return sets
             }
         }
-        return nil
+        return []
+    }
+
+    /// The set you finished on the last time you did an exercise: the last of `lastSets(of:)`.
+    ///
+    /// - Parameter exercise: The exercise to look up.
+    /// - Returns: That set, or nil if the exercise has never been done.
+    func lastSet(of exercise: Exercise) -> SetEntry? {
+        lastSets(of: exercise).last
     }
 
     /// Writes immediately rather than waiting for autosave, so a set logged just before the

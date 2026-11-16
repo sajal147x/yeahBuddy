@@ -12,8 +12,8 @@ struct AddSetSheet: View {
     let setNumber: Int
     /// The unit to show and enter weights in.
     let unit: WeightUnit
-    /// The final set from the last time this exercise was done, shown for reference.
-    let previous: SetEntry?
+    /// What this set was last time, e.g. "Last time: set 2 · 135 lb × 8"; nil hides it.
+    let lastTimeHint: String?
     /// The weight to log, in `unit`.
     @Binding var weight: Double
     /// The reps to log.
@@ -27,8 +27,8 @@ struct AddSetSheet: View {
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: Spacing.lg) {
-                if let previous {
-                    Text("Last time: \(unit.format(kilograms: previous.weightKg)) × \(previous.reps)")
+                if let lastTimeHint {
+                    Text(lastTimeHint)
                         .font(.label)
                         .foregroundStyle(Color.textSecondary)
                 }

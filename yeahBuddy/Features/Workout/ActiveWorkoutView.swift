@@ -109,7 +109,7 @@ struct ActiveWorkoutView: View {
                 // `===` compares the model objects themselves, so this view doesn't need
                 // SwiftData for their identifiers.
                 if entry === openEntry(in: workout) {
-                    ExerciseCard(entry: entry, unit: unit, previous: previousSet(for: entry)) {
+                    ExerciseCard(entry: entry, unit: unit, previousSets: previousSets(for: entry)) {
                         withAnimation(.snappy) {
                             open = .none
                         }
@@ -170,16 +170,16 @@ struct ActiveWorkoutView: View {
         }
     }
 
-    /// Where this exercise left off last session, for pre-filling its card.
+    /// Last session's sets for this exercise, for laying out on its card to repeat.
     ///
     /// - Parameter entry: An exercise in the workout in progress.
-    /// - Returns: The final set from the last finished workout with that exercise, or nil if
-    ///   it has never been done (or its exercise was deleted from the catalog).
-    private func previousSet(for entry: ExerciseEntry) -> SetEntry? {
+    /// - Returns: The sets from the last finished workout with that exercise, in order; empty
+    ///   if it has never been done (or its exercise was deleted from the catalog).
+    private func previousSets(for entry: ExerciseEntry) -> [SetEntry] {
         if let exercise = entry.exercise {
-            return log.lastSet(of: exercise)
+            return log.lastSets(of: exercise)
         }
-        return nil
+        return []
     }
 
     /// Minimize on the left (keeps the workout running); Finish and a More menu with Discard
